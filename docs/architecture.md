@@ -12,7 +12,7 @@ AccessFix separates model proposals from acceptance. The model supplies one comp
 | Provider adapter | `server/provider.ts` | Server-side Nebius authentication, NVIDIA model request and strict tool-call parsing |
 | Repair context | `server/repair-context.ts` | Readable source context and advisory diagnostics for rejected candidates |
 | Browser checks | Playwright and axe-core | User interactions, validation behavior, accessibility scans and screenshots |
-| Component harness | esbuild and React | React-only source bundling and a wrapper-owned submit callback |
+| Component harness | TypeScript, esbuild and React | Strict source type checking, React-only bundling and a wrapper-owned submit callback |
 
 ## Repair lifecycle
 
@@ -20,10 +20,10 @@ AccessFix separates model proposals from acceptance. The model supplies one comp
 2. Run the baseline in Chromium. A fully passing baseline ends as `clean` without inference; audit-only mode reports findings.
 3. Send the component, observed failures and any previous candidate feedback to NVIDIA Nemotron through Nebius Token Factory.
 4. Accept exactly one supported tool response: `propose_patch` with complete component source, or `abstain` with a reason.
-5. Build the proposed component and replay the same checks. Accept only when all checks pass, no axe violations remain, and no previously passing check regresses.
+5. Require strict TypeScript checking before bundling the proposed component, then replay the same browser checks. Accept only when compilation succeeds, all checks pass, no axe violations remain, and no previously passing check regresses. Type errors are returned as execution feedback for a bounded retry.
 6. If necessary, request one further proposal using actual failed-check feedback. Persist the final accepted, rejected, unresolved, error or cancelled state.
 
-There are at most two model requests per repair run, a 120-second provider-request timeout and a 60-second limit for each component inspection. The original file is never overwritten. An accepted diff is an output for human review.
+There are at most two model requests per repair run, a 120-second provider-request timeout and a 60-second limit for each component inspection. The CLI can lower the request cap to one with `--max-attempts 1`. The original file is never overwritten. An accepted diff is an output for human review.
 
 The provider receives original and previous-candidate source as separate plain-text sections, with structured browser observations alongside them. Source is not nested inside a second JSON string. Retry feedback preserves failed checks, regressions and execution errors. Advisory TypeScript syntax analysis also highlights changed regular-expression literals and, after a focus-check failure, unattached refs or focus decisions that read React error state. These observations are heuristics, not proof of a defect; they neither edit source nor alter acceptance. Candidate diagnostics are saved in the run JSON.
 
@@ -32,6 +32,8 @@ The provider receives original and previous-candidate source as separate plain-t
 The harness owns the confirmation screen and records the component's `onSubmit` payload. Checks exercise labels, keyboard completion, linked validation messages, focus, valid submission, malformed email, short passwords, required consent, axe rules and browser runtime errors. See the [component contract](component-contract.md) for selectors and semantics.
 
 Protected source files are outside the model's replacement scope. Generated code still executes inside a browser and can access page globals; this design is not a security boundary against deliberately hostile components. Import restrictions, browser request blocking and CSP reduce the available surface but do not establish a multitenant sandbox.
+
+New run fingerprints cover both `server/checks.ts` and `server/fixture-host.ts`, so changes to the TypeScript/build gate are included. Historical runs made before this gate was added fingerprinted only the browser-check source and retain their original verdicts; a historical browser pass does not establish strict TypeScript validity.
 
 ## Data flow and storage
 

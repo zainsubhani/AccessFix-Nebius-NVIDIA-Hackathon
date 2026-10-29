@@ -10,7 +10,7 @@ Built for the [Nebius × NVIDIA Global AI Hackathon](https://nebiusglobalaihacka
 
 ## Project status
 
-This release is an experimental local MVP. Auditing, candidate verification, regression rejection, history and report export are implemented. Live Nebius inference is connected, but the initial evaluation produced **no fully accepted autonomous repair in six candidates**. The best candidate passed nine of ten checks. Prepared verification exercises are labeled separately and do not call a model. See [verification results](docs/verification.md).
+This release is an experimental local MVP. Auditing, candidate verification, regression rejection, history and report export are implemented. The latest live NVIDIA/Nebius repair improved the included signup from **6/10 to 10/10 browser checks and passed strict TypeScript checking**, with one model request. Earlier trials exposed focus, validation and typing defects; one successful fixture run does not establish general repair reliability. Prepared verification exercises are labeled separately and do not call a model. See the full [verification results](docs/verification.md).
 
 The current scope is a documented signup-component contract, not arbitrary repositories or full-application accessibility certification.
 
@@ -52,7 +52,7 @@ Use the Token Factory endpoint and NVIDIA model available to your account. The b
 
 1. Select **React signup** and run an audit. Chromium reproduces label, keyboard, validation-feedback and focus failures.
 2. Request a repair. Nemotron receives the source and findings and returns one bounded component proposal or abstains.
-3. AccessFix replays the unchanged checks against the candidate. Up to two model attempts are allowed per run.
+3. AccessFix requires strict TypeScript compilation and replays the unchanged browser checks against the candidate. Up to two model attempts are allowed per run.
 4. Review the findings, source diff, screenshots, reported token usage and elapsed time. Export an HTML report. Download a patch only when every check passes without a regression.
 
 The original component file is never modified automatically. An accepted candidate still needs human review.
@@ -72,7 +72,7 @@ npm run accessfix -- --fixture signup --mode verify-regression
 npm run accessfix -- --component ./path/to/Signup.tsx --mode audit
 ```
 
-To request live inference, use `--mode repair`. Custom components must follow the [component contract](docs/component-contract.md).
+To request live inference, use `--mode repair`. Add `--max-attempts 1` to cap a run at one paid request; the default maximum is two. Custom components must follow the [component contract](docs/component-contract.md).
 
 Exit codes: `0` for accepted or clean; `1` for findings, unresolved/rejected candidates, cancellation or execution failure; `2` for invalid CLI configuration. A normal audit that finds defects exits with `1`.
 

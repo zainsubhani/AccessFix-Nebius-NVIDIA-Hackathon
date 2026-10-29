@@ -2,6 +2,8 @@
 
 Use the working app and actual saved results. Configure Nebius and verify the chosen model before recording. Do not present a prepared verification-lab patch as an AI-generated repair.
 
+The recorded run `20059716-75ab-457d-a685-28d0d9671158` is a real NVIDIA/Nebius candidate that passed strict TypeScript and all ten browser checks. It can be shown from local history without another inference request; clearly label playback as a saved run. Its 10.472-second duration and one-request token usage are recorded in the verification guide. The preceding browser-only accepted run failed TypeScript during review and should not be presented as a valid repair.
+
 | Time | Show | Explain |
 |---|---|---|
 | 0:00–0:20 | React signup preview; Tab through controls | A form can look finished while blocking someone using a keyboard. |

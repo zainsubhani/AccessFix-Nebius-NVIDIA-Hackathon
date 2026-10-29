@@ -9,6 +9,7 @@ import { requestProposal, type Proposal } from './provider.js';
 import { createRepairFeedback, type RepairFeedback } from './repair-context.js';
 
 export const sha256 = (value: string) => createHash('sha256').update(value).digest('hex');
+export const verificationHash = () => sha256(JSON.stringify(['server/checks.ts', 'server/fixture-host.ts'].map(file => ({ file, source: readFileSync(path.join(ROOT, file), 'utf8') }))));
 export const runDirectory = (id: string) => path.join(RUNS_DIR, id);
 export function saveRun(run: Run) {
   const directory = runDirectory(run.id); mkdirSync(directory, { recursive: true });
@@ -36,7 +37,7 @@ export function createRun(fixture: string, mode: RunMode, custom?: { source: str
   const run: Run = {
     id: randomUUID(), fixture, fixtureName: custom?.name || item!.name, file: custom?.file || item!.file, mode, state: 'queued', createdAt: new Date().toISOString(),
     events: [], attempts: [], summary: 'Waiting for the browser runner.', source,
-    sourceHash: sha256(source), contractHash: sha256(readFileSync(path.join(ROOT, 'server/checks.ts'), 'utf8')),
+    sourceHash: sha256(source), contractHash: verificationHash(),
     usage: { inputTokens: 0, outputTokens: 0, requests: 0, latencyMs: 0 },
     humanChecks: ['Screen reader announcements and reading order need manual testing with assistive technology.', 'This component harness does not test your full app, backend, authentication, or surrounding routes.', 'Automated checks cover the specified signup journey; they do not establish complete WCAG conformance.'],
   };
@@ -50,12 +51,13 @@ export function knownCandidate(kind: 'good' | 'regression') {
   return good.replace(/    if \(!terms\) \{[\s\S]*?\n    \}/, '    // Deliberate verification exercise: this candidate incorrectly removes required consent.');
 }
 
-export async function executeRun(run: Run, signal: AbortSignal, propose: typeof requestProposal = requestProposal): Promise<Run> {
+export async function executeRun(run: Run, signal: AbortSignal, propose: typeof requestProposal = requestProposal, options: { maxAttempts?: 1 | 2 } = {}): Promise<Run> {
   const transition = (state: Run['state'], message: string) => {
     run.state = state; run.summary = message; run.events.push({ at: new Date().toISOString(), stage: state, message }); saveRun(run);
   };
   const inspect = (source: string, prefix: string) => inspectComponent(source, runDirectory(run.id), prefix, AbortSignal.any([signal, AbortSignal.timeout(60_000)]));
   try {
+    if (options.maxAttempts !== undefined && ![1, 2].includes(options.maxAttempts)) throw new Error('Maximum attempts must be 1 or 2.');
     transition('auditing', 'Reproducing the signup journey in Chromium.');
     run.baseline = await inspect(run.source, 'before'); saveRun(run);
     if (run.baseline.checks.every(check => check.passed)) {
@@ -65,7 +67,7 @@ export async function executeRun(run: Run, signal: AbortSignal, propose: typeof 
       transition('audited', `${failed} of ${run.baseline.checks.length} checks failed. Review the evidence or request a repair.`);
     } else {
       let feedback: RepairFeedback | undefined;
-      const limit = run.mode === 'repair' ? 2 : 1;
+      const limit = run.mode === 'repair' ? options.maxAttempts ?? 2 : 1;
       for (let index = 1; index <= limit; index++) {
         signal.throwIfAborted();
         transition('proposing', run.mode === 'repair' ? `Asking NVIDIA Nemotron for a component patch (attempt ${index}/${limit}).` : 'Loading a known candidate for this verification exercise. No model call is made.');
