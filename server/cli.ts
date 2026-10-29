@@ -5,23 +5,26 @@ import { createRun, executeRun, runDirectory } from './runner.js';
 import { reportHtml } from './report.js';
 import { getFixture, providerConfig } from './config.js';
 import type { RunMode } from '../shared/types.js';
+import { isContract } from '../shared/contracts.js';
 
-const { values } = parseArgs({ options: { fixture: { type: 'string', default: 'signup' }, component: { type: 'string' }, mode: { type: 'string', default: 'audit' }, 'max-attempts': { type: 'string', default: '2' }, help: { type: 'boolean' } } });
+const { values } = parseArgs({ options: { fixture: { type: 'string', default: 'signup' }, component: { type: 'string' }, contract: { type: 'string', default: 'signup' }, mode: { type: 'string', default: 'audit' }, 'max-attempts': { type: 'string', default: '2' }, help: { type: 'boolean' } } });
 if (values.help) {
-  console.log('AccessFix — local React signup verification\n\nnpm run accessfix -- --fixture signup --mode audit\nnpm run accessfix -- --fixture team --mode repair --max-attempts 1\nnpm run accessfix -- --component ./Signup.tsx --mode audit\n\nModes: audit, repair, verify-good, verify-regression\n--max-attempts: 1 or 2 (default 2); caps live model requests per run.\nCustom components must follow docs/component-contract.md. Live repair sends component source and findings to Nebius.');
+  console.log('AccessFix — local React component verification\n\nnpm run accessfix -- --fixture signup --mode audit\nnpm run accessfix -- --fixture team --mode repair --max-attempts 1\nnpm run accessfix -- --component ./Signup.tsx --mode audit\n\nModes: audit, repair, verify-good, verify-regression, verify-recorded\n--max-attempts: 1 or 2 (default 2); caps live model requests per run.\n--contract: signup (default), login, dialog or navigation for custom components. Custom components must follow docs/component-contract.md. Live repair sends component source and findings to Nebius.');
 } else {
   try {
-    if (!['audit', 'repair', 'verify-good', 'verify-regression'].includes(values.mode!)) throw new Error('Unsupported run mode. Use --help.');
+    if (!['audit', 'repair', 'verify-good', 'verify-regression', 'verify-recorded'].includes(values.mode!)) throw new Error('Unsupported run mode. Use --help.');
+    if (!isContract(values.contract!)) throw new Error('Contract must be signup, login, dialog or navigation.');
     if (!['1', '2'].includes(values['max-attempts']!)) throw new Error('--max-attempts must be 1 or 2.');
     if (values.mode === 'repair' && !providerConfig().apiKey) throw new Error('Set NEBIUS_API_KEY in .env before using live repair.');
-    if (!values.component && !getFixture(values.fixture!)) throw new Error('Unknown fixture. Use signup, team or healthy.');
-    if (values.mode!.startsWith('verify-') && (values.component || values.fixture !== 'signup')) throw new Error('Known-patch exercises only support --fixture signup.');
+    if (!values.component && !getFixture(values.fixture!)) throw new Error('Unknown fixture. Use signup, team, healthy, login, dialog or navigation.');
+    if (values.mode!.startsWith('verify-') && (values.component || ['team', 'healthy'].includes(values.fixture!))) throw new Error('Prepared exercises require a signup, login, dialog or navigation fixture.');
+    if (values.mode === 'verify-recorded' && values.fixture !== 'signup') throw new Error('Recorded repair replay requires --fixture signup.');
     let custom;
     if (values.component) {
       const file = path.resolve(values.component);
       const source = await readFile(file, 'utf8');
       if (Buffer.byteLength(source) > 40_000) throw new Error('Custom component exceeds 40 KB.');
-      custom = { source, name: path.basename(file), file: path.basename(file) };
+      custom = { source, name: path.basename(file), file: path.basename(file), contract: values.contract };
     }
     const run = createRun(custom ? 'local' : values.fixture!, values.mode as RunMode, custom);
     const controller = new AbortController(); process.once('SIGINT', () => controller.abort());

@@ -3,10 +3,11 @@ import { useEffect, useState } from 'react';
 import type { Run } from '../../shared/types';
 import { ACTIVE_STATES } from '../../shared/types';
 import { Button, Status } from './ui';
+import { FocusReplay } from './FocusReplay';
 
 function Result({ value }: { value?: boolean }) { return value === undefined ? <span className="result neutral"><Minus size={14} />Pending</span> : value ? <span className="result pass"><Check size={14} />Pass</span> : <span className="result fail"><X size={14} />Fail</span>; }
 export function RunEvidence({ run }: { run: Run }) {
-  const [view, setView] = useState<'checks' | 'patch' | 'events'>('checks');
+  const [view, setView] = useState<'checks' | 'patch' | 'events' | 'replay'>('checks');
   const [attemptIndex, setAttemptIndex] = useState(0);
   useEffect(() => { setAttemptIndex(Math.max(0, run.attempts.length - 1)); }, [run.attempts.length]);
   const attempt = run.attempts[Math.min(attemptIndex, run.attempts.length - 1)];
@@ -15,8 +16,9 @@ export function RunEvidence({ run }: { run: Run }) {
     <div className="section-heading"><div><span className="eyebrow">THE EVIDENCE</span><h2 id="evidence-title">Every check. Both versions.</h2></div><div className="action-row">{complete && <a className="button button-secondary" href={`/api/runs/${run.id}/report`} download><Download size={16} />Export report</a>}{run.state === 'accepted' && <a className="button button-primary" href={`/api/runs/${run.id}/patch`} download><FileCode2 size={16} />Download patch</a>}</div></div>
     <div className="result-summary"><Status state={run.state} /><p>{run.summary}</p></div>
     {run.recordedDemo && <div className="notice"><Info size={17} /><span>Recorded live NVIDIA/Nebius repair from 29 October 2026. This saved evidence includes the original model output; viewing it makes no new inference request.</span></div>}
-    {run.mode.startsWith('verify-') && <div className="notice"><Info size={17} /><span>Known-patch exercise. These are real browser results for a prepared candidate; no AI call was made.</span></div>}
-    <div className="evidence-toolbar"><div className="segmented" aria-label="Evidence view">{(['checks', 'patch', 'events'] as const).map(item => <button key={item} aria-pressed={view === item} onClick={() => setView(item)}>{item === 'checks' ? 'Check results' : item === 'patch' ? 'Source diff' : 'Run events'}</button>)}</div>{run.attempts.length > 1 && <label className="attempt-label">Candidate<select value={attemptIndex} onChange={event => setAttemptIndex(Number(event.target.value))}>{run.attempts.map((item, index) => <option key={item.number} value={index}>Attempt {item.number}{item.accepted ? ' · accepted' : ' · not accepted'}</option>)}</select></label>}</div>
+    {run.mode.startsWith('verify-') && <div className="notice"><Info size={17} /><span>{run.mode === 'verify-recorded' ? 'Fresh verification of the original recorded NVIDIA/Nebius candidate. The source was not edited and no new model request was made.' : 'Known-patch exercise. These are real browser results for a prepared candidate; no AI call was made.'}</span></div>}
+    <div className="evidence-toolbar"><div className="segmented" aria-label="Evidence view">{(['checks', 'replay', 'patch', 'events'] as const).map(item => <button key={item} aria-pressed={view === item} onClick={() => setView(item)}>{item === 'checks' ? 'Check results' : item === 'replay' ? 'Keyboard replay' : item === 'patch' ? 'Source diff' : 'Run events'}</button>)}</div>{run.attempts.length > 1 && <label className="attempt-label">Candidate<select value={attemptIndex} onChange={event => setAttemptIndex(Number(event.target.value))}>{run.attempts.map((item, index) => <option key={item.number} value={index}>Attempt {item.number}{item.accepted ? ' · accepted' : ' · not accepted'}</option>)}</select></label>}</div>
+    {view === 'replay' && <FocusReplay key={attempt?.number || 0} runId={run.id} before={run.baseline?.focusTrace} after={attempt?.evidence?.focusTrace} candidate={attempt?.number} />}
     {view === 'checks' && <>
       <div className="table-scroll" tabIndex={0} aria-label="Scrollable check results"><table><thead><tr><th scope="col">Protected check</th><th scope="col">Before</th><th scope="col">Candidate {attempt?.number || ''}</th></tr></thead><tbody>{run.baseline?.checks.map(check => {
         const after = attempt?.evidence?.checks.find(item => item.id === check.id);

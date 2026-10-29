@@ -2,7 +2,7 @@
 
 **Reproduce accessibility barriers. Propose a repair. Verify the same user journey.**
 
-AccessFix is a local developer tool for auditing standalone React signup components. It combines real Chromium interaction and axe scans with NVIDIA Nemotron on Nebius Token Factory. Model-generated changes must pass the original accessibility and behavior checks before a patch is offered for review.
+AccessFix is a local developer tool for auditing standalone React signup, login, confirmation dialog and navigation components. It combines real Chromium interaction and axe scans with NVIDIA Nemotron on Nebius Token Factory. Model-generated changes must pass the original accessibility and behavior checks before a patch is offered for review.
 
 Built for the [Nebius × NVIDIA Global AI Hackathon](https://nebiusglobalaihackathon.devpost.com/), **Coding and Agentic Engineering** track.
 
@@ -12,7 +12,7 @@ Built for the [Nebius × NVIDIA Global AI Hackathon](https://nebiusglobalaihacka
 
 This release is an experimental MVP with a local developer workflow and a restricted hosted judge demo. Auditing, candidate verification, regression rejection, history and report export are implemented. The latest live NVIDIA/Nebius repair improved the included signup from **6/10 to 10/10 browser checks and passed strict TypeScript checking**, with one model request. Earlier trials exposed focus, validation and typing defects; one successful fixture run does not establish general repair reliability. Prepared verification exercises are labeled separately and do not call a model. See the full [verification results](docs/verification.md).
 
-The current scope is a documented signup-component contract, not arbitrary repositories or full-application accessibility certification.
+The current scope is four documented component contracts, not arbitrary repositories or full-application accessibility certification.
 
 The [hosted judge demo](https://accessfix-nebius-nvidia-demo.onrender.com) runs on Render Free. Judge credentials are shared privately. It supports fresh audits, the verification lab and recorded NVIDIA/Nebius repair evidence; new paid inference is disabled. Allow time for a cold start and download reports you need to keep. See the [deployment limits](docs/deployment.md).
 
@@ -55,7 +55,7 @@ Use the Token Factory endpoint and NVIDIA model available to your account. The b
 1. Select **React signup** and run an audit. Chromium reproduces label, keyboard, validation-feedback and focus failures.
 2. Request a repair. Nemotron receives the source and findings and returns one bounded component proposal or abstains.
 3. AccessFix requires strict TypeScript compilation and replays the unchanged browser checks against the candidate. Up to two model attempts are allowed per run.
-4. Review the findings, source diff, screenshots, reported token usage and elapsed time. Export an HTML report. Download a patch only when every check passes without a regression.
+4. Review the findings, source diff, keyboard replay, screenshots, reported token usage and elapsed time. Export an HTML report. Download a patch only when every check passes without a regression.
 
 The original component file is never modified automatically. An accepted candidate still needs human review.
 
@@ -64,7 +64,10 @@ The original component file is never modified automatically. An accepted candida
 | React signup | Four reproducible accessibility failures with working validation behavior |
 | Team invitation | A separate implementation with validation-feedback and focus defects |
 | Working signup | A clean baseline that skips inference |
-| Verification lab | Explicitly prepared good and bad candidates to demonstrate the acceptance gate |
+| Account login | Credential labels, error feedback and preserved credential validation |
+| Confirmation dialog | Modal semantics, focus containment, Escape and safe cancellation |
+| Workspace navigation | Keyboard links, current-page state and unchanged destinations |
+| Verification lab | Prepared good/bad candidates and fresh verification of the recorded AI repair; no model calls |
 
 ## Command-line usage
 
@@ -72,6 +75,8 @@ The original component file is never modified automatically. An accepted candida
 npm run accessfix -- --fixture signup --mode audit
 npm run accessfix -- --fixture signup --mode verify-regression
 npm run accessfix -- --component ./path/to/Signup.tsx --mode audit
+npm run accessfix -- --component ./path/to/Login.tsx --contract login --mode audit
+npm run accessfix -- --fixture signup --mode verify-recorded
 ```
 
 To request live inference, use `--mode repair`. Add `--max-attempts 1` to cap a run at one paid request; the default maximum is two. Custom components must follow the [component contract](docs/component-contract.md).
@@ -113,7 +118,7 @@ The automated suites use known or injected candidates and make no live inference
 
 Local mode binds to loopback. The included Render Free Blueprint runs a password-protected judge demo with fixed public fixtures, shared run limits and authenticated artifacts. It restores the recorded real AI repair at startup; fresh audits and the verification lab run without inference. New paid repair requests are disabled on this ephemeral deployment. See the [deployment guide](docs/deployment.md) for cold-start and storage limits. Local CLI artifacts may contain private source and remain in the ignored `.accessfix/` directory.
 
-The checks cover one defined signup journey. They do not establish complete WCAG conformance, real screen-reader behavior, backend correctness or general repair accuracy.
+The checks cover four explicitly defined component contracts. They do not establish complete WCAG conformance, real screen-reader behavior, backend correctness or general repair accuracy.
 
 ## License
 

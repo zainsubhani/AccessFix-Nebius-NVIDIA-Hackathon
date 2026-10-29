@@ -38,7 +38,7 @@ app.use((req, res, next) => {
   next();
 });
 const active = new Map<string, AbortController>();
-// Hosted fixtures are immutable image contents; cache only these three public previews.
+// Hosted fixtures are immutable image contents; cache only the included public previews.
 const hostedPreviews = new Map<string, Promise<string>>();
 recoverInterruptedRuns();
 if (deployment.hosted) { prepareHostedEvidence(); pruneHostedRuns(); }
@@ -66,7 +66,7 @@ app.get('/api/fixtures/:id/preview', async (req, res) => {
   res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'; form-action 'none'; frame-ancestors 'self'; sandbox allow-scripts");
   let preview = deployment.hosted ? hostedPreviews.get(fixture.id) : undefined;
   if (!preview) {
-    preview = compileFixture(fixtureSource(fixture.id));
+    preview = compileFixture(fixtureSource(fixture.id), fixture.contract);
     if (deployment.hosted) {
       hostedPreviews.set(fixture.id, preview);
       void preview.catch(() => hostedPreviews.delete(fixture.id));
@@ -79,9 +79,9 @@ app.get('/api/runs/:id', (req, res) => { const run = readRun(req.params.id); if 
 app.post('/api/runs', (req, res) => {
   if (active.size) { res.status(409).json({ error: 'A run is already active. Wait for it to finish or cancel it.' }); return; }
   const { fixture, mode } = req.body || {};
-  if (typeof fixture !== 'string' || !getFixture(fixture) || !['audit', 'repair', 'verify-good', 'verify-regression'].includes(mode)) { res.status(400).json({ error: 'Choose a supported fixture and run mode.' }); return; }
+  if (typeof fixture !== 'string' || !getFixture(fixture) || !['audit', 'repair', 'verify-good', 'verify-regression', 'verify-recorded'].includes(mode)) { res.status(400).json({ error: 'Choose a supported fixture and run mode.' }); return; }
   if (mode === 'repair' && !providerConfig().apiKey) { res.status(409).json({ error: 'Add NEBIUS_API_KEY to .env before starting live repair. Audits and verification exercises work without a key.' }); return; }
-  if (mode.startsWith('verify-') && fixture !== 'signup') { res.status(400).json({ error: 'The known-patch verification lab uses the React signup fixture.' }); return; }
+  if ((mode === 'verify-recorded' && fixture !== 'signup') || (mode.startsWith('verify-') && ['team', 'healthy'].includes(fixture))) { res.status(400).json({ error: 'Choose React signup for signup exercises and recorded repair replay, or a matching login, dialog or navigation exercise.' }); return; }
   if (deployment.hosted) {
     const denied = budget.reserve(mode === 'repair');
     if (denied) { res.status(429).json({ error: denied }); return; }
@@ -102,7 +102,8 @@ app.post('/api/runs/:id/cancel', (req, res) => {
 });
 app.get('/api/runs/:id/artifacts/:name', (req, res) => {
   const run = readRun(req.params.id); const name = req.params.name;
-  if (!run || !/^(before|after-[12])\.png$/.test(name)) { res.status(404).end(); return; }
+  const images = [run?.baseline, ...(run?.attempts.map(item => item.evidence) || [])].flatMap(item => item ? [item.screenshot, ...(item.focusTrace?.steps.map(step => step.screenshot) || [])] : []);
+  if (!run || !/^(before|after-[12])(-focus-\d{1,2})?\.png$/.test(name) || !images.includes(name)) { res.status(404).end(); return; }
   res.sendFile(path.join(runDirectory(run.id), name), { dotfiles: 'allow' });
 });
 app.get('/api/runs/:id/report', (req, res) => {
