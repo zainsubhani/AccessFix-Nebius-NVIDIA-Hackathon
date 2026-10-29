@@ -121,3 +121,30 @@ test('FirstStep: timeout, syntax errors, cancellation, network isolation, and ke
     assert.match(await page.locator('.fs-review-summary').innerText(), /9\/9/);
   } finally { await browser.close(); }
 });
+
+test('FirstStep: live coaching UI preserves the last reply and exports provenance when allowance is exhausted', { timeout: 30000 }, async () => {
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ acceptDownloads: true });
+  try {
+    await page.route('**/api/firststep/config', route => route.fulfill({ json: { enabled: true, remaining: 1 } }));
+    await page.route('**/api/firststep/coach', route => {
+      assert.deepEqual(route.request().postDataJSON(), { mission: 'checkout', question: 'Which event should I compare?' });
+      return route.fulfill({ json: { reply: 'Compare the total before and after FULL100.', remaining: 0, model: 'nvidia/test-fixture', generatedAt: '2026-10-29T00:00:00Z', usage: { inputTokens: 400, outputTokens: 50 } } });
+    });
+    await page.goto(URL);
+    await page.getByLabel('Ask the Nemotron coach').fill('Which event should I compare?');
+    await page.getByRole('button', { name: 'Ask coach', exact: true }).click();
+    await page.getByText('Compare the total before and after FULL100.', { exact: true }).waitFor();
+    assert.equal(await page.getByRole('button', { name: 'Ask coach', exact: true }).count(), 0);
+    await page.getByText('Live response · NVIDIA Nemotron on Nebius Token Factory', { exact: true }).waitFor();
+    const nextDownload = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Download evidence' }).click();
+    const download = await nextDownload;
+    const stream = await download.createReadStream();
+    assert.ok(stream);
+    const chunks: Buffer[] = []; for await (const chunk of stream) chunks.push(Buffer.from(chunk));
+    const evidence = JSON.parse(Buffer.concat(chunks).toString());
+    assert.equal(evidence.guidance.liveRepliesReceivedThisPage, 1);
+    assert.deepEqual(evidence.guidance.liveResponses, [{ model: 'nvidia/test-fixture', generatedAt: '2026-10-29T00:00:00Z', usage: { inputTokens: 400, outputTokens: 50 } }]);
+  } finally { await browser.close(); }
+});

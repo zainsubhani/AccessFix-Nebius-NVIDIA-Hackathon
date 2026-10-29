@@ -1,0 +1,40 @@
+{
+  "startedAt": "2026-10-29T22:50:37.147Z",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "baseUrl": "https://api.tokenfactory.nebius.com/v1",
+  "question": "The order fails after the FULL100 coupon. What evidence should I compare before changing the code?",
+  "durationMs": 1581,
+  "status": 200,
+  "provider": {
+    "id": "chatcmpl-8e3b756533c8f777",
+    "model": "nvidia/nemotron-3-super-120b-a12b",
+    "usage": {
+      "completion_tokens": 179,
+      "prompt_tokens": 406,
+      "total_tokens": 585,
+      "completion_tokens_details": {
+        "accepted_prediction_tokens": null,
+        "audio_tokens": null,
+        "reasoning_tokens": 50,
+        "rejected_prediction_tokens": null
+      },
+      "prompt_tokens_details": {
+        "audio_tokens": null,
+        "cached_tokens": 0,
+        "created_cache_tokens": 0,
+        "multimodal_tokens": null
+      },
+      "prompt_cache_hit_tokens": 0,
+      "prompt_cache_miss_tokens": 406
+    },
+    "finishReason": "stop",
+    "reply": "\n\nCheck whether the system\u2019s post\u2011coupon logic mistakenly treats a zero\u2011total order like a positive\u2011total one\u2014compare the\u202f`checkout_attempt` entry (email present, paymentToken absent) with the rule that a zero\u2011total order should be confirmed without requiring a payment token. Look at the point where the decision is made after `coupon_applied`. If the code still demands a token when `totalCents===0`, that\u2019s why you see \u201cUnable to place order\u201d. Compare the handling of `totalCents===0` versus `totalCents>0` in the decision branch."
+  },
+  "result": {
+    "reply": "Check whether the system\u2019s post\u2011coupon logic mistakenly treats a zero\u2011total order like a positive\u2011total one\u2014compare the\u202f`checkout_attempt` entry (email present, paymentToken absent) with the rule that a zero\u2011total order should be confirmed without requiring a payment token. Look at the point where the decision is made after `coupon_applied`. If the code still demands a token when `totalCents===0`, that\u2019s why you see \u201cUnable to place order\u201d. Compare the handling of `totalCents===0` versus `totalCents>0` in the decision branch.",
+    "source": "NVIDIA Nemotron on Nebius Token Factory",
+    "remaining": 0
+  },
+  "success": true,
+  "scope": "One real FirstStep coaching request; not a learning-outcome or latency benchmark."
+}

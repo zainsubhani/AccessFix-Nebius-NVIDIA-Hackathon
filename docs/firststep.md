@@ -41,14 +41,17 @@ This boundary is for local practice. It is not a hardened public execution servi
 
 The optional server adapter calls an NVIDIA model through Nebius Token Factory. It receives only a learner question and the public, authored checkout facts. It has no tools, filesystem access or grading authority. Its prompt requests a short debugging hint without a full solution, but model compliance is not guaranteed.
 
-**Live coaching is disabled by default and is always disabled in hosted/judge-worker mode.** Having `NEBIUS_API_KEY` in `.env` does not enable it. For local development, both process environment settings must be explicitly supplied to the server:
+**Live coaching is opt-in.** Having `NEBIUS_API_KEY` alone does not enable it. For local development, set `FIRSTSTEP_LIVE_COACHING=true` and `FIRSTSTEP_COACH_REQUEST_LIMIT=<1–20>` in the server process environment. This local-only allowance resets on restart.
 
-- `FIRSTSTEP_LIVE_COACHING=true`
-- `FIRSTSTEP_COACH_REQUEST_LIMIT=<1–20>`
+For hosted use, additionally configure `FIRSTSTEP_BUDGET_DATABASE_URL` and apply [the budget migration](../db/001-firststep-budget.sql) once. Hosted mode refuses to enable coaching without this durable ledger. The release uses the existing Render Free service and a separate Neon Free Postgres database. No learner source, questions or responses are stored in the ledger.
 
-The existing `NEBIUS_API_KEY`, `NEBIUS_BASE_URL` and `NEBIUS_MODEL` configuration is reused. A request is reserved before inference; failed requests consume the configured allowance. Only one coaching request may be active. The cap is per server process and resets on restart; it is not a durable public billing limit. The transfer task rejects coaching requests. No automatic retries occur.
+The ledger authorizes at most $5 in conservative reservations: five cents per attempted request, including failures, up to 100 attempts. The initial five-cent reservation covers the first live verification made before the ledger existed. The database update is atomic; concurrent servers, reloads, restarts and reapplying the migration cannot reset the allowance. The ledger expires after the scheduled judging period, on 16 December 2026 UTC. Missing database access, an absent row or exhausted reservations fail closed before inference. Authored practice remains usable.
 
-The UI labels authored guidance separately, explains what a live request sends, and does not expose the key. Live inference has not been exercised for this implementation. Adapter tests inject a fake provider; they do not establish real model quality or current account availability. This prototype should not be represented as a live NVIDIA/Nebius demonstration until a real authorized run is recorded.
+The budgeted model is pinned to `nvidia/nemotron-3-super-120b-a12b`, with at most 8 KiB of serialized prompt text and 1,200 output tokens. On 29 October 2026 the Token Factory pricing console listed $0.30 per million input tokens and $0.90 per million output tokens. Five cents per request is a conservative allowance, not a claim about actual charges. Recheck pricing before changing the model or limits. This protects FirstStep's configured coach; unrelated calls made with the same provider account are outside this ledger.
+
+Only one coaching request runs per server process; the transfer task rejects coaching. No automatic retries occur. The UI separates authored hints from live responses and exports model, time and token metadata for live assistance received on the current page.
+
+A real authorized FirstStep request succeeded on 29 October 2026: HTTP 200, 1,581 ms, 406 input tokens and 179 output tokens. See [runtime evidence](evidence/firststep-runtime.json). This single observation establishes a working runtime connection, not model quality, learning gains or a latency guarantee.
 
 ## Demonstration
 
@@ -68,4 +71,4 @@ Run `npm run build`, `npm test`, and `npm run test:ui` with the development serv
 
 Before expanding the curriculum, observe a small voluntary learner pilot. Compare matched unfamiliar tasks before and after practice, record assistance, review explanations manually, and collect task-level confusion and dropout feedback. Use a comparison condition if making causal learning claims. A small pilot is usability evidence, not proof of employment impact.
 
-Further work includes a broader validated scenario bank, accessibility testing beyond automated checks, a hardened execution architecture for public use, and authorized live-coaching evaluation. Employer recognition, real skill transfer and willingness to return remain unvalidated.
+Further work includes a broader validated scenario bank, accessibility testing beyond automated checks, a hardened execution architecture for public use, and broader live-coaching evaluation. Employer recognition, real skill transfer and willingness to return remain unvalidated.
