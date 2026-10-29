@@ -51,13 +51,22 @@ export function knownCandidate(kind: 'good' | 'regression') {
   return good.replace(/    if \(!terms\) \{[\s\S]*?\n    \}/, '    // Deliberate verification exercise: this candidate incorrectly removes required consent.');
 }
 
-export async function executeRun(run: Run, signal: AbortSignal, propose: typeof requestProposal = requestProposal, options: { maxAttempts?: 1 | 2 } = {}): Promise<Run> {
+export async function executeRun(run: Run, signal: AbortSignal, propose: typeof requestProposal = requestProposal, options: { maxAttempts?: 1 | 2; inspectionTimeoutMs?: number } = {}): Promise<Run> {
   const transition = (state: Run['state'], message: string) => {
     run.state = state; run.summary = message; run.events.push({ at: new Date().toISOString(), stage: state, message }); saveRun(run);
   };
-  const inspect = (source: string, prefix: string) => inspectComponent(source, runDirectory(run.id), prefix, AbortSignal.any([signal, AbortSignal.timeout(60_000)]));
+  const inspectionTimeoutMs = options.inspectionTimeoutMs ?? 60_000;
+  const inspect = async (source: string, prefix: string) => {
+    const deadline = AbortSignal.timeout(inspectionTimeoutMs);
+    try { return await inspectComponent(source, runDirectory(run.id), prefix, AbortSignal.any([signal, deadline])); }
+    catch (error) {
+      if (!signal.aborted && deadline.aborted) throw new Error(`Browser inspection exceeded its ${inspectionTimeoutMs / 1000}-second time limit. Try again when the runner is less busy.`);
+      throw error;
+    }
+  };
   try {
     if (options.maxAttempts !== undefined && ![1, 2].includes(options.maxAttempts)) throw new Error('Maximum attempts must be 1 or 2.');
+    if (!Number.isInteger(inspectionTimeoutMs) || inspectionTimeoutMs < 60_000 || inspectionTimeoutMs > 180_000) throw new Error('Browser inspection timeout must be between 60 and 180 seconds.');
     transition('auditing', 'Reproducing the signup journey in Chromium.');
     run.baseline = await inspect(run.source, 'before'); saveRun(run);
     if (run.baseline.checks.every(check => check.passed)) {

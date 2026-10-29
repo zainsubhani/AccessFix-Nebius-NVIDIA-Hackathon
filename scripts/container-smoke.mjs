@@ -31,24 +31,31 @@ try {
   assert.equal(docker('exec', name, 'sh', '-c', 'test ! -f /app/.env && test ! -d /app/.accessfix && echo clean'), 'clean');
   const history = await (await request('/api/runs')).json();
   assert.equal(history[0].recordedDemo, true);
+  const preview = await request('/api/fixtures/signup/preview');
+  assert.equal(preview.status, 200);
+  assert.match(await preview.text(), /AccessFix signup fixture/);
   for (const [fixture, mode, expected] of [['healthy', 'audit', 'clean'], ['signup', 'verify-regression', 'rejected']]) {
     const response = await request('/api/runs', { fixture, mode });
     assert.equal(response.status, 202);
     const started = await response.json();
     let finished;
-    for (let attempt = 0; attempt < 180; attempt++) {
+    for (let attempt = 0; attempt < 780; attempt++) {
       finished = await (await request(`/api/runs/${started.id}`)).json();
       if (finished.finishedAt) break;
       await wait(500);
     }
     assert.equal(finished.state, expected, finished.error || finished.summary);
     assert.equal(finished.usage.requests, 0);
-    console.log(`${mode}: ${expected}; zero model requests`);
+    console.log(`${mode}: ${expected}; zero model requests; ${Date.parse(finished.finishedAt) - Date.parse(finished.createdAt)} ms`);
   }
   console.log(`Container resource usage: ${docker('stats', '--no-stream', '--format', '{{.MemUsage}}', name)}`);
   console.log('Hosted demo passed with 512 MB RAM and 0.1 CPU: authentication, saved evidence, real Chromium audit and regression rejection.');
 } catch (error) {
-  if (created) console.error(docker('logs', '--tail', '30', name));
+  if (created) {
+    console.error(docker('logs', '--tail', '30', name));
+    console.error(`Container OOM state: ${docker('inspect', '--format', '{{.State.OOMKilled}}', name)}`);
+    try { console.error(docker('exec', name, 'cat', '/sys/fs/cgroup/memory.events')); } catch {}
+  }
   throw error;
 } finally {
   if (created) docker('rm', '-f', name);

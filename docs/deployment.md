@@ -17,7 +17,7 @@ No Nebius API key is needed for this deployment. `ACCESSFIX_EPHEMERAL=true` requ
 
 Render Free currently provides 512 MB RAM and 0.1 CPU. Services sleep after 15 minutes without traffic and can take about a minute to wake. Files disappear on restart, redeploy or spin-down; the curated recording is restored at startup, while new runs and the hourly counter can disappear. Free instance hours and bandwidth are shared across the workspace. See [Render's free-service limits](https://render.com/docs/free) and [compute plans](https://render.com/docs/compute-plans). Do not add a paid disk or change the plan to run this Blueprint.
 
-Before recording a demo, open the URL early, let the service wake, and run the audit once. The resource-constrained container smoke test exercises real Chromium, but it cannot guarantee Render's latency or availability.
+The free mode allows up to three minutes per component inspection, including compilation and browser execution; a two-component verification exercise can take longer. The checks and acceptance conditions remain the same as local mode. Before recording a demo, open the URL early, let the service wake, and run the audit once. The resource-constrained container smoke test exercises real Chromium, but it cannot guarantee Render's latency or availability.
 
 ## Container verification
 
