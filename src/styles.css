@@ -20,3 +20,21 @@
 .focus-comparison{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.focus-comparison.single-trace{grid-template-columns:minmax(0,760px)}.focus-pane{min-width:0;border:1px solid var(--color-border);border-radius:var(--radius-panel);padding:16px}.focus-pane h3{font-size:14px}.focus-image{position:relative;background:var(--color-background);overflow:hidden;border:1px solid var(--color-border);border-radius:var(--radius-control)}.focus-image img{display:block;width:100%;height:100%;object-fit:contain}.focus-image>p{padding:20px}.focus-marker{position:absolute;pointer-events:none;border:3px solid var(--color-primary);box-shadow:0 0 0 2px white;border-radius:3px}.focus-action{display:flex;flex-direction:column;gap:3px;margin-top:12px;overflow-wrap:anywhere}.focus-action span,.focus-pane>.muted{font-size:12px}.focus-pane>.muted{margin-top:8px}
 @media(max-width:1000px){.focus-comparison{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:600px){.evidence-toolbar .segmented{display:flex;flex-wrap:wrap}.replay-controls{gap:8px}.replay-controls>span{width:100%}.focus-pane{padding:12px}}
+
+.github-export { margin-top: 20px; border-top: 1px solid var(--color-border); padding-top: 18px; }
+.github-export > summary { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; cursor: pointer; font-weight: 700; }
+.github-export > summary span { color: var(--color-muted); font-size: 12px; font-weight: 400; }
+.export-content { padding-top: 12px; }
+.export-content p { line-height: 1.65; }
+.export-fields { display: flex; align-items: end; gap: 12px; margin: 16px 0; }
+.export-fields label { display: flex; flex: 1; flex-direction: column; gap: 8px; font-size: 13px; font-weight: 600; }
+.export-fields input { min-width: 0; width: 100%; border: 1px solid var(--color-border); border-radius: 6px; padding: 10px 12px; color: var(--color-ink); background: white; font: inherit; }
+.export-preview { border: 1px solid var(--color-border); border-radius: 10px; padding: 18px; }
+.export-preview h3 { margin: 0 0 16px; }
+.export-preview dl { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.export-preview dt { color: var(--color-muted); font-size: 12px; }
+.export-preview dd { margin: 4px 0 0; overflow-wrap: anywhere; font-size: 13px; }
+.export-preview pre { max-height: 300px; overflow: auto; padding: 14px; background: var(--color-background); border: 1px solid var(--color-border); border-radius: 6px; font-size: 12px; }
+@media (max-width: 680px) { .export-fields { align-items: stretch; flex-direction: column; } .export-preview dl { grid-template-columns: 1fr; } }
+
+.export-fields input:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 3px; }
