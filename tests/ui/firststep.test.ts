@@ -39,7 +39,7 @@ test('FirstStep: reproduce, reject a regression, accept a fix, transfer, export,
   try {
     await page.goto(URL);
     await page.getByRole('heading', { name: 'The order that never went through.' }).waitFor();
-    assert.match(await page.title(), /^FirstStep/);
+    assert.match(await page.title(), /^PatchTrek/);
     assert.equal(await page.getByRole('link', { name: 'Companion workbench' }).getAttribute('href'), '/accessfix');
     await page.evaluate(() => document.fonts.ready);
     await page.screenshot({ path: '.accessfix/firststep/workspace-desktop.png', fullPage: true });
@@ -75,7 +75,7 @@ test('FirstStep: reproduce, reject a regression, accept a fix, transfer, export,
     await accessible(page);
     const download = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Download evidence' }).click();
-    assert.equal((await download).suggestedFilename(), 'firststep-practice-evidence.json');
+    assert.equal((await download).suggestedFilename(), 'patchtrek-practice-evidence.json');
     await page.screenshot({ path: '.accessfix/firststep/transfer-passed.png', fullPage: true });
     await page.reload();
     await page.getByText('Your drafts were restored.', { exact: false }).waitFor();
@@ -146,5 +146,76 @@ test('FirstStep: live coaching UI preserves the last reply and exports provenanc
     const evidence = JSON.parse(Buffer.concat(chunks).toString());
     assert.equal(evidence.guidance.liveRepliesReceivedThisPage, 1);
     assert.deepEqual(evidence.guidance.liveResponses, [{ model: 'nvidia/test-fixture', generatedAt: '2026-10-29T00:00:00Z', usage: { inputTokens: 400, outputTokens: 50 } }]);
+  } finally { await browser.close(); }
+});
+
+test('PatchTrek: custom cases, regression history, safe restoration and readable report', { timeout: 60000 }, async () => {
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true });
+  const errors: string[] = []; const mutations: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+  page.on('request', request => { if (request.method() === 'POST') mutations.push(request.url()); });
+  try {
+    await page.goto(URL);
+    assert.equal(new globalThis.URL(page.url()).pathname, '/');
+    assert.match(await page.title(), /^PatchTrek/);
+    assert.equal(await page.locator('vite-error-overlay').count(), 0);
+    await page.getByRole('heading', { name: 'The order that never went through.' }).waitFor();
+    await page.getByText('Write and run your own cases', { exact: true }).click();
+    await page.getByRole('button', { name: 'Run custom cases', exact: true }).click();
+    await page.getByText('1/1 custom cases passed', { exact: true }).waitFor();
+    assert.equal(await page.getByRole('button', { name: 'Try the transfer task' }).isDisabled(), true, 'Custom cases do not count as authored assessment');
+    assert.match(await page.locator('.fs-history').innerText(), /Run checks twice/);
+    await page.getByLabel('Custom cases (JSON)').fill('{');
+    await page.getByText('Source or cases changed. Run custom cases again.', { exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Run custom cases', exact: true }).click();
+    await page.getByText('Use valid JSON: an array of cases with input and expected fields.', { exact: true }).waitFor();
+    assert.equal(await page.locator('iframe').count(), 0);
+    const suite = JSON.stringify([{ label: 'Free order', input: { totalCents: 0, email: 'learner@example.test' }, expected: 'confirm' }], null, 2);
+    await page.getByLabel('Custom cases (JSON)').fill(suite);
+    await page.getByRole('button', { name: 'Run custom cases', exact: true }).click();
+    await page.getByText('0/1 custom cases passed', { exact: true }).waitFor();
+    await review(page, checkout);
+    await page.getByRole('button', { name: 'Run custom cases', exact: true }).click();
+    await page.getByText('1/1 custom cases passed', { exact: true }).waitFor();
+    await review(page, "function decide() { return 'reject'; }");
+    assert.match(await page.locator('.fs-comparison').innerText(), /0 newly passing · [1-9] regressions/);
+    await page.getByText('Inspect previous attempts (2)', { exact: true }).click();
+    await page.getByText('View source for attempt 1', { exact: true }).click();
+    assert.equal(await page.locator('.fs-history pre:visible').innerText(), checkout);
+    await page.getByRole('button', { name: 'Restore draft from attempt 1', exact: true }).click();
+    assert.equal(await page.getByLabel('Decision function', { exact: true }).inputValue(), checkout);
+    assert.equal(await page.getByRole('button', { name: 'Try the transfer task' }).isDisabled(), true);
+    assert.equal(await page.locator('.fs-review-summary').count(), 0, 'Restoring does not restore passing evidence');
+    await review(page, checkout);
+    assert.match(await page.locator('.fs-comparison').innerText(), /[1-9] newly passing · 0 regressions/);
+    await page.getByLabel('Leave a handoff for your reviewer').fill('I compared free and paid orders and preserved invalid-input rejection. I used the authored scenario facts for this practice.');
+    const nextDownload = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Download report', exact: true }).click();
+    const download = await nextDownload;
+    assert.equal(download.suggestedFilename(), 'patchtrek-engineering-report.md');
+    const stream = await download.createReadStream(); assert.ok(stream);
+    const chunks: Buffer[] = []; for await (const chunk of stream) chunks.push(Buffer.from(chunk));
+    const report = Buffer.concat(chunks).toString();
+    assert.match(report, /Latest authored check run: 9\/9 checks passed for the current draft/);
+    assert.match(report, /Live coach replies recorded on this page: 0/);
+    assert.match(report, /1\/1 custom cases passed/);
+    assert.match(report, /Retained runs: 3/);
+    await accessible(page);
+    await page.locator('.fs-history').screenshot({ path: '/tmp/patchtrek-history-desktop.png' });
+    await page.locator('.fs-lab').screenshot({ path: '/tmp/patchtrek-edge-cases-desktop.png' });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await accessible(page);
+    await page.locator('.fs-lab').screenshot({ path: '/tmp/patchtrek-edge-cases-mobile.png' });
+    await page.setViewportSize({ width: 320, height: 720 });
+    await accessible(page);
+    await page.reload();
+    await page.getByText('Write and run your own cases', { exact: true }).click();
+    assert.equal(await page.getByLabel('Custom cases (JSON)').inputValue(), suite);
+    assert.equal(await page.locator('.fs-custom-results').count(), 0);
+    assert.equal(await page.locator('.fs-comparison').count(), 0);
+    assert.equal(await page.getByRole('button', { name: 'Try the transfer task' }).isDisabled(), true);
+    assert.deepEqual(errors, []); assert.deepEqual(mutations, []);
   } finally { await browser.close(); }
 });

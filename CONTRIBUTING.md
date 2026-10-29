@@ -1,6 +1,6 @@
 # Contributing
 
-FirstStep is a developer practice lab with authored incidents, executable checks and optional NVIDIA/Nebius coaching. The earlier AccessFix workbench is retained at `/accessfix`. Keep scenario facts, model guidance and executable evidence clearly distinguished.
+PatchTrek is a developer practice lab with authored incidents, executable checks and optional NVIDIA/Nebius coaching. The earlier AccessFix workbench is retained at `/accessfix`. Keep scenario facts, model guidance and executable evidence clearly distinguished.
 
 ## Development setup
 

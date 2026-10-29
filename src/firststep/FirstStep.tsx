@@ -5,13 +5,15 @@ import { allPassed, missions, type MissionId, type PracticeRun } from '../../sha
 import { runPractice } from './runner';
 import { readSession, saveSession, type MissionProgress } from './session';
 import { PracticeTextarea } from './fields';
+import { AttemptHistory, CustomCaseLab } from './EvidencePanels';
+import { engineeringReport, MAX_ATTEMPTS, parseCustomCases, PRODUCT_NAME, type CoachEvidence } from './evidence';
 import './firststep.css';
 
 export default function FirstStep() {
   const [initial] = useState(readSession);
   const [session, setSession] = useState(initial.session);
   const [saveWarning, setSaveWarning] = useState(initial.warning);
-  const [busy, setBusy] = useState<'baseline' | 'review' | 'preview' | null>(null);
+  const [busy, setBusy] = useState<'baseline' | 'review' | 'preview' | 'custom' | null>(null);
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
   const [showReset, setShowReset] = useState(false);
@@ -22,7 +24,7 @@ export default function FirstStep() {
   const [coachBusy, setCoachBusy] = useState(false);
   const [coachError, setCoachError] = useState('');
   const [coachUses, setCoachUses] = useState(0);
-  const [coachEvidence, setCoachEvidence] = useState<{ model: string; generatedAt: string; usage: unknown }[]>([]);
+  const [coachEvidence, setCoachEvidence] = useState<CoachEvidence[]>([]);
   const [previewCase, setPreviewCase] = useState(0);
   const [previewResult, setPreviewResult] = useState<{ source: string; caseId: string; actual: string } | null>(null);
   const controller = useRef<AbortController | null>(null);
@@ -39,7 +41,7 @@ export default function FirstStep() {
     if (!saveSession(session)) setSaveWarning('Browser storage is unavailable. Download your evidence before leaving; this draft exists only in this page.');
   }, [session]);
   useEffect(() => {
-    document.title = `FirstStep · ${mission.ticket} practice shift`;
+    document.title = `${PRODUCT_NAME} · ${mission.ticket} practice shift`;
   }, [mission.ticket]);
   useEffect(() => {
     if (!saveWarning) return;
@@ -61,9 +63,25 @@ export default function FirstStep() {
     try {
       const results = await runPractice(source, mission.checks, abort.signal);
       const result: PracticeRun = { source, results, at: new Date().toISOString() };
-      update(mode === 'baseline' ? { baseline: result } : { review: result, attempts: progress.attempts + 1 });
+      update(mode === 'baseline' ? { baseline: result } : { review: result, attempts: progress.attempts + 1, history: [...progress.history, { ...result, attempt: progress.attempts + 1 }].slice(-MAX_ATTEMPTS) });
       setStatus(`${mode === 'baseline' ? 'Original code' : 'Your draft'}: ${results.filter(r => r.passed).length} of ${results.length} checks passed.`);
     } catch (err) { setError(err instanceof Error ? err.message : 'Checks could not finish. Try again.'); setStatus('Checks did not finish.'); }
+    finally { controller.current = null; setBusy(null); }
+  }
+
+  async function runCustom() {
+    if (controller.current) return;
+    setError('');
+    let cases;
+    try { cases = parseCustomCases(progress.customDraft); }
+    catch (err) { setError(err instanceof Error ? err.message : 'Check the custom case format.'); return; }
+    const abort = new AbortController(); controller.current = abort;
+    setBusy('custom'); setStatus('Running your custom edge cases…');
+    try {
+      const results = await runPractice(progress.source, cases, abort.signal);
+      update({ customRun: { source: progress.source, suiteText: progress.customDraft, cases, results, at: new Date().toISOString() } });
+      setStatus(`Custom suite: ${results.filter(result => result.passed).length} of ${results.length} expectations matched. Authored assessment is unchanged.`);
+    } catch (err) { setError(err instanceof Error ? err.message : 'Custom cases could not finish.'); setStatus('Custom cases did not finish.'); }
     finally { controller.current = null; setBusy(null); }
   }
 
@@ -103,11 +121,14 @@ export default function FirstStep() {
   }
 
   function exportEvidence() {
-    const evidence = { product: 'FirstStep', version: 1, exportedAt: new Date().toISOString(), scope: 'Self-directed practice record. Not a verified credential or proof of independent work.', guidance: { authoredHints: session.progress.checkout.hints, liveRepliesReceivedThisPage: coachUses, liveResponses: coachEvidence }, progress: session.progress };
-    const url = URL.createObjectURL(new Blob([JSON.stringify(evidence, null, 2)], { type: 'application/json' }));
-    const link = document.createElement('a'); link.href = url; link.download = 'firststep-practice-evidence.json'; link.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    const evidence = { product: PRODUCT_NAME, version: 2, exportedAt: new Date().toISOString(), scope: 'Self-directed practice record. Not a verified credential or proof of independent work. Execution results, attempt history and live replies cover this page session only; drafts and authored hint counts may be restored from this tab.', guidance: { authoredHints: session.progress.checkout.hints, liveRepliesReceivedThisPage: coachUses, liveResponses: coachEvidence }, progress: session.progress };
+    downloadFile(JSON.stringify(evidence, null, 2), 'application/json', 'patchtrek-practice-evidence.json');
     setStatus('Practice evidence downloaded. It includes your drafts and observations.');
+  }
+
+  function exportReport() {
+    downloadFile(engineeringReport(session, coachEvidence), 'text/markdown;charset=utf-8', 'patchtrek-engineering-report.md');
+    setStatus('Engineering report downloaded. Review it and remove anything private before sharing.');
   }
 
   const reviewed = progress.review;
@@ -115,7 +136,7 @@ export default function FirstStep() {
   return <div className="fs-app">
     <a className="skip-link" href="#practice-main">Skip to practice</a>
     <aside className="fs-rail">
-      <a className="fs-brand" href="/" aria-label="FirstStep practice home"><span className="fs-mark"><ArrowUpRight size={23} strokeWidth={2.5} /></span>firststep<span className="fs-brand-dot">.</span></a>
+      <a className="fs-brand" href="/" aria-label={`${PRODUCT_NAME} practice home`}><span className="fs-mark"><ArrowUpRight size={23} strokeWidth={2.5} /></span>patchtrek<span className="fs-brand-dot">.</span></a>
       <div className="fs-rail-caption">YOUR PRACTICE SHIFT</div>
       <nav aria-label="Practice missions">
         <button className="fs-mission-nav" aria-current={current === 'checkout' ? 'page' : undefined} onClick={() => navigate('checkout')} disabled={Boolean(busy || coachBusy)}><Code2 size={19}/><span>Checkout incident<small>Guided investigation</small></span>{unlocked && <Check size={16}/>}</button>
@@ -162,11 +183,19 @@ export default function FirstStep() {
           <section className="fs-review" aria-labelledby="review-title"><div className="fs-panel-heading"><ShieldCheck size={18}/><h2 id="review-title">Review evidence</h2><span>{progress.attempts} RUN{progress.attempts === 1 ? '' : 'S'}</span></div>
             {!reviewed ? <div className="fs-review-empty"><div className="fs-check-glyph"><Check size={22}/></div><div><h3>A fix needs evidence.</h3><p>Run your draft against the business rules. You’ll see what works, what broke, and why.</p></div></div> : <><div className={`fs-review-summary ${passing ? 'is-passing' : ''}`}><strong>{reviewed.results.filter(r => r.passed).length}/{mission.checks.length}</strong><span>{stale ? 'Results belong to an earlier draft. Run checks again.' : passing ? 'All authored checks passed. Explain your reasoning below.' : 'Some behaviours still need attention. Inspect the failed checks.'}</span></div><ul className="fs-checks">{reviewed.results.map(result => <li key={result.id}><details><summary>{result.passed ? <CheckCircle2 size={16} className="fs-pass"/> : <XCircle size={16} className="fs-fail"/>}<span>{result.label}</span><strong>{result.passed ? 'Pass' : 'Fail'}</strong></summary><div><p>{result.reason}</p><p>Expected <code>{result.expected}</code> · received <code>{result.actual}</code></p></div></details></li>)}</ul></>}
           </section>
+          <AttemptHistory history={progress.history} disabled={Boolean(busy)} onRestore={attempt => { update({ source: attempt.source, review: null }); setStatus(`Draft from attempt ${attempt.attempt} restored. Run checks to verify it again.`); }}/>
+          <CustomCaseLab draft={progress.customDraft} source={progress.source} result={progress.customRun} disabled={Boolean(busy)} running={busy === 'custom'} onChange={customDraft => update({ customDraft })} onRun={() => void runCustom()}/>
           <section className="fs-notebook"><label htmlFor="practice-notes">Leave a handoff for your reviewer</label><p id="notes-help">What caused the issue? What did you change, and what could have regressed? Mention any outside assistance. At least 40 characters unlocks the next task; this is not an AI-graded answer.</p><PracticeTextarea id="practice-notes" rows={4} maxLength={2000} placeholder="My hypothesis was… The evidence showed… I checked…" value={progress.notes} onChange={e => update({ notes: e.target.value })} aria-describedby="notes-help"/><div className="fs-notebook-footer"><span>{progress.notes.trim().length}/40 minimum characters</span>{current === 'checkout' ? <Button variant="primary" disabled={!unlocked || Boolean(busy)} onClick={() => navigate('reservation')}>Try the transfer task<ArrowRight size={15}/></Button> : passing && <span className="fs-pass"><CheckCircle2 size={16}/>Transfer checks passed</span>}</div></section>
-          <div className="fs-export"><div><strong>Your work, with the evidence.</strong><p>Download drafts, checks, observations and recorded assistance. This is a practice record, not a hiring credential.</p></div><Button onClick={exportEvidence} disabled={Boolean(busy || coachBusy)}><ArrowDownToLine size={16}/>Download evidence</Button></div>
+          <div className="fs-export"><div><strong>Your work, with the evidence.</strong><p>Keep the complete JSON record or a readable engineering report with reasoning, regressions and assistance. These are practice records, not hiring credentials.</p></div><div className="fs-export-actions"><Button onClick={exportReport} disabled={Boolean(busy || coachBusy)}><FileText size={16}/>Download report</Button><Button onClick={exportEvidence} disabled={Boolean(busy || coachBusy)}><ArrowDownToLine size={16}/>Download evidence</Button></div></div>
         </div>
       </div>
-      <footer className="fs-footer"><span>FirstStep · Nebius × NVIDIA Global AI Hackathon</span><span>Practice locally. Learn deliberately.</span></footer>
+      <footer className="fs-footer"><span>{PRODUCT_NAME} · Nebius × NVIDIA Global AI Hackathon</span><span>Practice locally. Learn deliberately.</span></footer>
     </main>
   </div>;
+}
+
+function downloadFile(content: string, type: string, filename: string) {
+  const url = URL.createObjectURL(new Blob([content], { type }));
+  const link = document.createElement('a'); link.href = url; link.download = filename; link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

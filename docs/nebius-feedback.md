@@ -2,7 +2,7 @@
 
 ## Observed integration
 
-FirstStep calls `nvidia/nemotron-3-super-120b-a12b` through the OpenAI-compatible Nebius Token Factory chat-completions endpoint. The first live request on 29 October 2026 returned HTTP 200 in 1,581 ms with 406 prompt tokens and 179 completion tokens. The response provided a relevant comparison between zero-total and paid checkout rules. A second request through the hosted Render application returned HTTP 200 with 404 input and 194 output tokens. Its hint focused on comparing the coupon and checkout events. Two requests are insufficient to assess reliability or teaching effectiveness.
+PatchTrek calls `nvidia/nemotron-3-super-120b-a12b` through the OpenAI-compatible Nebius Token Factory chat-completions endpoint. The first live request on 29 October 2026 returned HTTP 200 in 1,581 ms with 406 prompt tokens and 179 completion tokens. The response provided a relevant comparison between zero-total and paid checkout rules. A second request through the hosted Render application returned HTTP 200 with 404 input and 194 output tokens. Its hint focused on comparing the coupon and checkout events. Two requests are insufficient to assess reliability or teaching effectiveness.
 
 ## What worked
 
@@ -10,7 +10,7 @@ The standard HTTP interface fit the existing Node server without a provider SDK.
 
 ## Friction and suggestions
 
-FirstStep needed durable request reservations outside the free hosting filesystem to avoid resetting its spending allowance on restart. A clearly documented, enforceable project/key spending ceiling would simplify this setup. Better examples distinguishing reasoning-token budgets from visible answer length would also help builders deliver short educational hints predictably.
+PatchTrek needed durable request reservations outside the free hosting filesystem to avoid resetting its spending allowance on restart. A clearly documented, enforceable project/key spending ceiling would simplify this setup. Better examples distinguishing reasoning-token budgets from visible answer length would also help builders deliver short educational hints predictably.
 
 ## NVIDIA model feedback
 

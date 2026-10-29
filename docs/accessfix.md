@@ -1,6 +1,6 @@
 # AccessFix companion workbench
 
-This document describes the earlier accessibility workbench retained at `/accessfix`. FirstStep is the primary project; see the [project README](../README.md).
+This document describes the earlier accessibility workbench retained at `/accessfix`. PatchTrek is the primary project; see the [project README](../README.md).
 
 **Reproduce accessibility barriers. Propose a repair. Verify the same user journey.**
 
@@ -23,8 +23,8 @@ The [hosted judge demo](https://accessfix-nebius-nvidia-demo.onrender.com/access
 Install **Node.js 22+** and npm, then run:
 
 ```sh
-git clone https://github.com/zainsubhani/FirstStep-Nebius-NVIDIA-Hackathon.git
-cd FirstStep-Nebius-NVIDIA-Hackathon
+git clone https://github.com/zainsubhani/PatchTrek-Nebius-NVIDIA-Hackathon.git
+cd PatchTrek-Nebius-NVIDIA-Hackathon
 npm ci
 npm run browsers
 npm run dev
