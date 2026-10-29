@@ -39,13 +39,31 @@ try {
     assert.equal(response.status, 202);
     const started = await response.json();
     let finished;
+    let consecutiveReadFailures = 0;
     for (let attempt = 0; attempt < 780; attempt++) {
-      finished = await (await request(`/api/runs/${started.id}`)).json();
+      try {
+        finished = await (await request(`/api/runs/${started.id}`)).json();
+        consecutiveReadFailures = 0;
+      } catch (error) {
+        // A throttled server can close an idle keep-alive socket while compiling.
+        // Retry only reads, as the UI does; never repeat a run-creation request.
+        if (++consecutiveReadFailures > 3) throw error;
+        await wait(500);
+        continue;
+      }
       if (finished.finishedAt) break;
       await wait(500);
     }
     assert.equal(finished.state, expected, finished.error || finished.summary);
     assert.equal(finished.usage.requests, 0);
+    if (mode === 'verify-regression') {
+      const candidate = finished.attempts[0];
+      assert.equal(candidate.error, undefined, candidate.error);
+      assert.ok(candidate.evidence, 'Regression rejection must come from completed browser checks.');
+      assert.equal(candidate.evidence.checks.find(check => check.id === 'labels')?.passed, true);
+      assert.equal(candidate.evidence.checks.find(check => check.id === 'keyboard')?.passed, true);
+      assert.ok(candidate.regressions.includes('Consent is required before signup'));
+    }
     console.log(`${mode}: ${expected}; zero model requests; ${Date.parse(finished.finishedAt) - Date.parse(finished.createdAt)} ms`);
   }
   console.log(`Container resource usage: ${docker('stats', '--no-stream', '--format', '{{.MemUsage}}', name)}`);
