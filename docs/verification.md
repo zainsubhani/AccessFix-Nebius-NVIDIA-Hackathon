@@ -64,7 +64,7 @@ This is one successful autonomous repair of the included signup fixture. It does
 
 Each local run saves source/check-suite SHA-256 fingerprints, events, candidate diffs, checks, usage and screenshots. The CLI also writes a portable HTML report and, when accepted, a patch. The dashboard generates its downloadable report from the saved run.
 
-Local artifacts live in `.accessfix/runs/` and are excluded from version control because they can contain supplied source. One curated copy of the latest accepted run, using only the public signup fixture, is included under `demo/verified-signup/` for hosted playback. It retains the original timestamps and usage; the hosted UI labels it as a recording. Generate new evidence with the commands in the [README](../README.md). Live repair requires a valid provider key, model access and credits; results may vary.
+Local artifacts live in `.accessfix/runs/` and are excluded from version control because they can contain supplied source. One curated copy of the latest accepted run, using only the public signup fixture, is included under `demo/verified-signup/` for hosted playback. It retains the original timestamps, verification fingerprint and usage; the hosted UI and report label it as a recording. New free-hosted runs use longer browser readiness waits to accommodate shared CPU throttling, recorded as the `free-demo` execution profile. The historical AI run used local timings. Generate new evidence with the commands in the [README](../README.md). Live repair requires a valid provider key, model access and credits; results may vary.
 
 ## Limits
 

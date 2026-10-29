@@ -17,6 +17,7 @@ test('public binding fails closed without strong demo credentials, persistent da
   assert.throws(() => deploymentConfig({ ...env, ACCESSFIX_MODEL_REQUEST_LIMIT: '-1' }), /integer/);
   assert.throws(() => deploymentConfig({ ...env, ACCESSFIX_EPHEMERAL: 'true', ACCESSFIX_MODEL_REQUEST_LIMIT: '1' }), /Ephemeral hosting cannot/);
   assert.equal(deploymentConfig({ ...env, ACCESSFIX_EPHEMERAL: 'true' }).modelRequestLimit, 0);
+  assert.equal(deploymentConfig({ ...env, ACCESSFIX_EPHEMERAL: 'true' }).executionProfile, 'free-demo');
   const configured = deploymentConfig(env);
   assert.equal(configured.maxAttempts, 1);
   assert.equal(configured.modelRequestLimit, 0);

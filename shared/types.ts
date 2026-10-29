@@ -1,5 +1,6 @@
 export type FixtureId = 'signup' | 'team' | 'healthy';
 export type RunMode = 'audit' | 'repair' | 'verify-good' | 'verify-regression';
+export type ExecutionProfile = 'local' | 'free-demo';
 export type RunState = 'queued' | 'auditing' | 'proposing' | 'verifying' | 'audited' | 'accepted' | 'rejected' | 'unresolved' | 'clean' | 'error' | 'cancelled';
 export const ACTIVE_STATES: RunState[] = ['queued', 'auditing', 'proposing', 'verifying'];
 export interface Fixture { id: FixtureId; name: string; description: string; file: string; }
@@ -17,6 +18,7 @@ export interface Run {
   source: string; sourceHash: string; contractHash: string; model?: string; usage: Usage;
   humanChecks: string[];
   recordedDemo?: boolean;
+  executionProfile?: ExecutionProfile;
 }
 export interface Config { providerConfigured: boolean; model: string; fixtures: Fixture[]; maxAttempts: number; activeRunId?: string; hostedDemo?: boolean; ephemeralStorage?: boolean; repairAvailable?: boolean; repairUnavailableReason?: string; modelRequestsRemaining?: number; }
 export interface SignupPayload { email: string; password: string; terms: boolean; }

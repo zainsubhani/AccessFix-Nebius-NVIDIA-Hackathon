@@ -79,7 +79,7 @@ app.post('/api/runs', (req, res) => {
   }
   const run = createRun(fixture, mode as RunMode);
   const controller = new AbortController(); active.set(run.id, controller);
-  void executeRun(run, controller.signal, undefined, { maxAttempts: deployment.maxAttempts, inspectionTimeoutMs: deployment.inspectionTimeoutMs }).finally(() => active.delete(run.id));
+  void executeRun(run, controller.signal, undefined, { maxAttempts: deployment.maxAttempts, executionProfile: deployment.executionProfile }).finally(() => active.delete(run.id));
   res.status(202).json(run);
 });
 app.post('/api/runs/:id/cancel', (req, res) => {

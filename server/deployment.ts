@@ -33,7 +33,7 @@ export function deploymentConfig(env: NodeJS.ProcessEnv = process.env) {
     modelRequestLimit,
     runsPerHour: integer('ACCESSFIX_RUNS_PER_HOUR', 20, 100),
     maxAttempts: hosted ? 1 as const : 2 as const,
-    inspectionTimeoutMs: hosted && ephemeral ? 180_000 : 60_000,
+    executionProfile: hosted && ephemeral ? 'free-demo' as const : 'local' as const,
   };
 }
 export type DeploymentConfig = ReturnType<typeof deploymentConfig>;
