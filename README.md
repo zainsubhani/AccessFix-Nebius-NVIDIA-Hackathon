@@ -35,9 +35,9 @@ Drafts are saved in this browser tab for up to 24 hours. Reload restores work bu
 
 An optional server adapter calls an NVIDIA Nemotron model through **Nebius Token Factory** for a focused debugging hint. It sends only the learner's question and public scenario facts, not learner source. The coach does not execute code or determine passing grades.
 
-**Live coaching is disabled and has not been validated with a real FirstStep model request.** Current hints are authored and labelled. Provider tests inject fake responses. This is an integration-ready prototype, not yet evidence of the hackathon's required runtime model use.
+**Real FirstStep inference was verified on 29 October 2026** with `nvidia/nemotron-3-super-120b-a12b`: a debugging question received an HTTP 200 response in 1.58 seconds, using 406 input and 179 output tokens. See the [runtime evidence](docs/evidence/firststep-runtime.json). Automated tests still use fake responses; the live result is recorded separately.
 
-The [integration guide](docs/firststep.md#nvidia-and-nebius-coaching) documents explicit opt-in and request limits. Keep keys in local `.env`, never frontend code or GitHub. Hosted and judge-worker modes force coaching off; key presence alone does not enable it.
+The [integration guide](docs/firststep.md#nvidia-and-nebius-coaching) documents explicit opt-in and request limits. Keep keys in local `.env`, never frontend code or GitHub. Hosted coaching requires a durable Postgres budget ledger in addition to explicit opt-in. Key presence alone does not enable it. The companion repair budget remains disabled.
 
 ## Scope
 

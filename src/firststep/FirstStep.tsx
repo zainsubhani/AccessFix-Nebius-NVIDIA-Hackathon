@@ -22,6 +22,7 @@ export default function FirstStep() {
   const [coachBusy, setCoachBusy] = useState(false);
   const [coachError, setCoachError] = useState('');
   const [coachUses, setCoachUses] = useState(0);
+  const [coachEvidence, setCoachEvidence] = useState<{ model: string; generatedAt: string; usage: unknown }[]>([]);
   const [previewCase, setPreviewCase] = useState(0);
   const [previewResult, setPreviewResult] = useState<{ source: string; caseId: string; actual: string } | null>(null);
   const controller = useRef<AbortController | null>(null);
@@ -95,12 +96,14 @@ export default function FirstStep() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Coaching is unavailable. The authored hints still work.');
       setCoachReply(data.reply); setCoachUses(n => n + 1);
+      setCoachEvidence(items => [...items, { model: data.model, generatedAt: data.generatedAt, usage: data.usage }]);
+      if (data.remaining === 0) setCoachEnabled(false);
     } catch (err) { if (!abort.signal.aborted) setCoachError(err instanceof Error ? err.message : 'Could not reach the coach. Your draft is unchanged.'); }
     finally { setCoachBusy(false); coachController.current = null; }
   }
 
   function exportEvidence() {
-    const evidence = { product: 'FirstStep', version: 1, exportedAt: new Date().toISOString(), scope: 'Self-directed practice record. Not a verified credential or proof of independent work.', guidance: { authoredHints: session.progress.checkout.hints, liveRepliesReceivedThisPage: coachUses }, progress: session.progress };
+    const evidence = { product: 'FirstStep', version: 1, exportedAt: new Date().toISOString(), scope: 'Self-directed practice record. Not a verified credential or proof of independent work.', guidance: { authoredHints: session.progress.checkout.hints, liveRepliesReceivedThisPage: coachUses, liveResponses: coachEvidence }, progress: session.progress };
     const url = URL.createObjectURL(new Blob([JSON.stringify(evidence, null, 2)], { type: 'application/json' }));
     const link = document.createElement('a'); link.href = url; link.download = 'firststep-practice-evidence.json'; link.click();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -142,7 +145,8 @@ export default function FirstStep() {
           <div className="fs-coach"><div className="fs-panel-heading"><Lightbulb size={18}/><h2>When you get stuck</h2></div>
             {current === 'checkout' ? <><p>Hints reveal one more step of the reasoning. They are recorded in your practice evidence.</p>{mission.hints.slice(0, progress.hints).map((hint, i) => <div className="fs-hint" key={hint}><strong>Hint {i + 1}</strong><p>{hint}</p></div>)}<Button onClick={() => update({ hints: progress.hints + 1 })} disabled={progress.hints >= mission.hints.length}>{progress.hints >= mission.hints.length ? 'All hints revealed' : 'Reveal next hint'}<ArrowRight size={14}/></Button></> : <p>This transfer task has no mentor hints. Use its acceptance criteria and check results; report any outside help in your notes.</p>}
             <p className="fs-coach-mode">Authored guidance · live AI {coachEnabled ? 'available for the guided mission' : 'disabled'}</p>
-            {coachEnabled && current === 'checkout' && <form noValidate onSubmit={e => { e.preventDefault(); void askCoach(); }}><label htmlFor="coach-question">Ask the Nemotron coach</label><PracticeTextarea id="coach-question" rows={3} maxLength={800} value={coachQuestion} onChange={e => setCoachQuestion(e.target.value)} /><p>Only this question and the public scenario facts are sent to Nebius. A request uses inference credits.</p><Button type="submit" disabled={!coachQuestion.trim()} busy={coachBusy}>Ask coach</Button>{coachError && <p role="alert">{coachError}</p>}{coachReply && <p className="fs-hint">{coachReply}</p>}</form>}
+            {coachEnabled && current === 'checkout' && <form noValidate onSubmit={e => { e.preventDefault(); void askCoach(); }}><label htmlFor="coach-question">Ask the Nemotron coach</label><PracticeTextarea id="coach-question" rows={3} maxLength={800} value={coachQuestion} onChange={e => setCoachQuestion(e.target.value)} /><p>Free demo coaching. Only this question and the public scenario facts are sent to Nebius; your code stays in this browser.</p><Button type="submit" disabled={!coachQuestion.trim()} busy={coachBusy}>Ask coach</Button>{coachError && <p role="alert">{coachError}</p>}</form>}
+            {coachReply && current === 'checkout' && <div role="status"><p className="fs-hint">{coachReply}</p><small>Live response · NVIDIA Nemotron on Nebius Token Factory</small></div>}
           </div>
         </section>
         <div className="fs-build-column">

@@ -1,6 +1,6 @@
 # FirstStep demonstration
 
-Target length: 2–3 minutes. Record the running app with readable English narration or captions. The current demonstration uses authored scenarios and prepared code edits; it makes no model calls and does not establish learning gains.
+Target length: 2–3 minutes. Record the running app with readable English narration or captions. The current demonstration uses authored scenarios and prepared code edits; include one real coaching request and keep prepared code edits explicitly labelled. The demonstration does not establish learning gains.
 
 | Time | Show | Explain |
 |---|---|---|
@@ -12,10 +12,10 @@ Target length: 2–3 minutes. Record the running app with readable English narra
 | 1:30–1:50 | Correct fix; nine of nine; confirmed order | Preserve validation, handle zero separately and require payment for positive amounts. |
 | 1:50–2:10 | Handoff and reservation task | Explain the change, then apply the concept where eligibility is a separate requirement. |
 | 2:10–2:25 | Evidence download | Export code, results and observations; this is a practice record, not a hiring credential. |
-| 2:25–2:45 | Guidance label | NVIDIA Nemotron coaching through Nebius Token Factory is implemented but disabled and not live-validated. Current hints are authored. |
+| 2:25–2:45 | Guidance label | Ask a question, show the actual NVIDIA Nemotron response from Nebius Token Factory, and distinguish it from authored hints. |
 
 ## Recording and submission
 
 Use actual check outcomes and label prepared fixes or shortened waits. Exclude credentials, `.env` and private source. Do not present AccessFix's recorded model output as FirstStep inference. Do not imply task completion proves learning or employment readiness.
 
-A local MP4 is not a public submission. The event requires a public YouTube link. Before final submission, validate the required NVIDIA/Nebius integration and update the video with real runtime evidence. Keep the disabled-mode disclosure until demonstrated behavior changes. See the [submission brief](submission.md).
+A local MP4 is not a public submission. The event requires a public YouTube link. The final recording must show the actual live response and identify model usage accurately. See the [submission brief](submission.md).

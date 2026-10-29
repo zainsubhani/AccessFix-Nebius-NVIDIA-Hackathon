@@ -18,13 +18,13 @@ A guided mission concerns checkout rejecting valid fully discounted orders. Lear
 
 React, TypeScript and Vite provide the interface; Node.js and Express serve the app and optional coaching API. Code executes in a disposable browser worker inside a sandboxed iframe. The optional adapter calls NVIDIA Nemotron through Nebius Token Factory for focused hints. Executable checks, rather than model scores, determine whether a draft meets the authored cases.
 
-**Live FirstStep coaching is disabled and has not been tested with the real provider.** Hosted mode forces it off. Automated provider tests inject fake responses. The current prototype must not be represented as having demonstrated the required NVIDIA/Nebius runtime usage.
+**Real FirstStep coaching was verified on 29 October 2026** using NVIDIA Nemotron through Nebius Token Factory (HTTP 200; 406 input and 179 output tokens). [Runtime evidence](evidence/firststep-runtime.json) records the actual question and response. Hosted coaching uses an atomic Postgres reservation ledger; automated tests still use fake model responses.
 
 ## Judging fit
 
 | Criterion | Demonstrable evidence | Remaining gap |
 |---|---|---|
-| Technological implementation | Executed checks, regression rejection, invalidation of stale results, cancellation and timeout | Real NVIDIA/Nebius runtime validation |
+| Technological implementation | Executed checks, regression rejection, invalidation of stale results, cancellation and timeout | Broader coaching evaluation |
 | Design | Complete investigation-to-review flow; responsive and keyboard-accessible interface | Observed learner usability feedback |
 | Potential impact | Specific learner audience and practical incident workflow | Usefulness, repeat use and learning evidence |
 | Quality of idea | Transparent investigation, verification and follow-up practice | Differentiation from existing simulations and AI learning platforms |
@@ -41,10 +41,10 @@ The repository began as AccessFix, an accessibility repair workbench. FirstStep 
 |---|---|
 | Public repository | [FirstStep-Nebius-NVIDIA-Hackathon](https://github.com/zainsubhani/FirstStep-Nebius-NVIDIA-Hackathon) |
 | License and setup | MIT; README and FirstStep guide |
-| Judge hosting | Existing authenticated Render Free service; verify the merged FirstStep release before sharing |
+| Judge hosting | Existing authenticated Render Free service; working practice release verified; live-coaching deployment verification follows the release |
 | Demonstration | [FirstStep script](demo-script.md); local recording does not constitute submission |
-| NVIDIA/Nebius runtime | Pending an explicitly authorized live FirstStep run |
-| Public video | Pending final recording with runtime evidence and public YouTube upload |
+| NVIDIA/Nebius runtime | Real authorized FirstStep request verified; see runtime evidence |
+| Public video | Final video with runtime evidence and public YouTube link required |
 | Devpost entry | Description prepared here; final submission not performed |
 
 Deadline: **30 October 2026, 10:00 PDT / 18:00 Europe/Paris**. The [rules](https://nebiusglobalaihackathon.devpost.com/rules) require a working demo or test build, public open-source code and setup instructions, a public YouTube video under three minutes, required runtime model usage, and access throughout judging. Verify the event page before submitting.

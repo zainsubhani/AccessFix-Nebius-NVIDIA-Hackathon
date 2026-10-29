@@ -4,9 +4,19 @@
 
 FirstStep is the primary app at `/`; `/firststep` is an alias. The companion AccessFix workbench is at `/accessfix`. Both share the existing Node service and authentication. Keep the Render service identity `accessfix-nebius-nvidia-demo` to update the existing free service rather than create another resource.
 
-After merging a verified release, use **Manual Deploy → Deploy latest commit** on that Render service. Confirm its GitHub source is `zainsubhani/FirstStep-Nebius-NVIDIA-Hackathon` on `main`. Check the root page title and run **Reproduce incident**: the baseline must pass seven of nine checks. `/api/firststep/config` must return `enabled: false` and `remaining: 0`. Keep automatic deploys off until review and CI are complete.
+After merging a verified release, use **Manual Deploy → Deploy latest commit** on that Render service. Confirm its GitHub source is `zainsubhani/FirstStep-Nebius-NVIDIA-Hackathon` on `main`. Check the root page title and run **Reproduce incident**: the baseline must pass seven of nine checks. Without opt-in, `/api/firststep/config` must return `enabled: false` and `remaining: 0`. For the live judge release, verify `enabled: true` and a positive durable allowance. Keep automatic deploys off until review and CI are complete.
 
-FirstStep decisions execute in the learner's browser and do not use server Chromium. Drafts are browser-tab data. Coaching stays disabled on this host, even if local opt-in variables are present. Hosted practice alone does not demonstrate NVIDIA/Nebius runtime use.
+FirstStep decisions execute in the learner's browser and do not use server Chromium. Drafts are browser-tab data. FirstStep coaching can run on this host with explicit opt-in and an external durable budget; the companion AccessFix repair remains disabled. See the live setup below.
+
+## Live FirstStep coaching on Render Free
+
+1. Provision a dedicated free Postgres database. Test `db/001-firststep-budget.sql` on an isolated branch, then apply it to the production database. The migration never resets an existing reservation counter.
+2. Add server secrets `NEBIUS_API_KEY` and `FIRSTSTEP_BUDGET_DATABASE_URL` to Render. Use a runtime database role with SELECT and UPDATE on only `reserved_cents` and `updated_at` in `firststep_coach_budget`; keep schema/owner credentials private.
+3. Set `FIRSTSTEP_LIVE_COACHING=true`. Keep `ACCESSFIX_MODEL_REQUEST_LIMIT=0` and `ACCESSFIX_EPHEMERAL=true`. Pin `NEBIUS_MODEL=nvidia/nemotron-3-super-120b-a12b`. The Blueprint defaults remain disabled so fresh deployments never opt into spending automatically.
+4. Deploy the reviewed commit. Check `/api/firststep/config`, then verify one explicitly budgeted question through **Ask coach**. Record the model and token metadata; do not retry automatically.
+5. Supply the shared demo credentials in Devpost's private testing instructions. Keep Render, Neon and provider credit available through the judging period ending 15 December 2026. A temporary Mac tunnel is not required for FirstStep coaching.
+
+The durable ledger reserves five cents for each attempt, with a $5 total ceiling, fixed model and bounded prompt/output sizes. This is conservative request accounting at documented prices, not a provider-wide billing control. Database failure, missing setup, expiry or exhausted allowance stops new requests. The ledger contains no learner content. See [budget details and pricing assumptions](firststep.md#nvidia-and-nebius-coaching).
 
 ## Companion workbench infrastructure
 
@@ -24,7 +34,7 @@ The demo offers:
 - A clearly labeled recording of the real NVIDIA/Nebius signup repair, including source diff, screenshots, checks, token usage and downloadable report.
 - One active run at a time and a shared limit of 20 runs per UTC hour.
 
-No Nebius API key is needed for this deployment. `ACCESSFIX_EPHEMERAL=true` requires `ACCESSFIX_MODEL_REQUEST_LIMIT=0`; the server refuses to start if paid inference is enabled with ephemeral accounting. Opening the recorded repair does not call the model.
+No Nebius API key is needed for authored practice or companion audits. `ACCESSFIX_EPHEMERAL=true` requires `ACCESSFIX_MODEL_REQUEST_LIMIT=0`; the server refuses to start if companion repair inference is enabled with ephemeral accounting. Opening the recorded repair does not call the model.
 
 Render Free currently provides 512 MB RAM and 0.1 CPU. Services sleep after 15 minutes without traffic and can take about a minute to wake. Files disappear on restart, redeploy or spin-down; the curated recording is restored at startup, while new runs and the hourly counter can disappear. Free instance hours and bandwidth are shared across the workspace. See [Render's free-service limits](https://render.com/docs/free) and [compute plans](https://render.com/docs/compute-plans). Do not add a paid disk or change the plan to run this Blueprint.
 
@@ -51,7 +61,7 @@ The entrypoint initializes the data directory and then drops to the unprivileged
 | `ACCESSFIX_DEMO_PASSWORD` | Secret of at least 24 characters |
 | `ACCESSFIX_PUBLIC_ORIGIN` | Exact public HTTPS origin; defaults to `RENDER_EXTERNAL_URL` |
 | `ACCESSFIX_DATA_DIR` | Absolute run-data directory; image default `/var/data/accessfix` |
-| `ACCESSFIX_EPHEMERAL=true` | Declares disposable storage and forbids paid inference |
+| `ACCESSFIX_EPHEMERAL=true` | Declares disposable run storage and forbids companion repair inference |
 | `ACCESSFIX_MODEL_REQUEST_LIMIT=0` | Global model-request reservation cap; zero disables live repair |
 | `ACCESSFIX_RUNS_PER_HOUR=20` | Shared hourly limit for all run modes |
 
