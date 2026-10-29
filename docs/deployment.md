@@ -8,6 +8,8 @@ After merging a verified release, use **Manual Deploy → Deploy latest commit**
 
 FirstStep decisions execute in the learner's browser and do not use server Chromium. Drafts are browser-tab data. FirstStep coaching can run on this host with explicit opt-in and an external durable budget; the companion AccessFix repair remains disabled. See the live setup below.
 
+The judge release at commit `e194aa8` was deployed on 30 October 2026 (Europe/Paris). A real hosted coaching request returned HTTP 200 and decremented the durable allowance from 99 to 98. See [runtime evidence](evidence/firststep-hosted-runtime.json). This is a point-in-time check; free hosting and provider availability must remain active throughout judging.
+
 ## Live FirstStep coaching on Render Free
 
 1. Provision a dedicated free Postgres database. Test `db/001-firststep-budget.sql` on an isolated branch, then apply it to the production database. The migration never resets an existing reservation counter.

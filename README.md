@@ -35,7 +35,7 @@ Drafts are saved in this browser tab for up to 24 hours. Reload restores work bu
 
 An optional server adapter calls an NVIDIA Nemotron model through **Nebius Token Factory** for a focused debugging hint. It sends only the learner's question and public scenario facts, not learner source. The coach does not execute code or determine passing grades.
 
-**Real FirstStep inference was verified on 29 October 2026** with `nvidia/nemotron-3-super-120b-a12b`: a debugging question received an HTTP 200 response in 1.58 seconds, using 406 input and 179 output tokens. See the [runtime evidence](docs/evidence/firststep-runtime.json). Automated tests still use fake responses; the live result is recorded separately.
+**Real FirstStep inference was verified on 29 October 2026** with `nvidia/nemotron-3-super-120b-a12b`: a debugging question received an HTTP 200 response in 1.58 seconds, using 406 input and 179 output tokens. See the [runtime evidence](docs/evidence/firststep-runtime.json). A second request through the deployed judge app also returned HTTP 200; see the [hosted runtime evidence](docs/evidence/firststep-hosted-runtime.json). Automated tests use fake responses, separate from these two live requests.
 
 The [integration guide](docs/firststep.md#nvidia-and-nebius-coaching) documents explicit opt-in and request limits. Keep keys in local `.env`, never frontend code or GitHub. Hosted coaching requires a durable Postgres budget ledger in addition to explicit opt-in. Key presence alone does not enable it. The companion repair budget remains disabled.
 
@@ -59,7 +59,7 @@ With `npm run dev` running in another terminal:
 npm run test:ui
 ```
 
-For a production preview, run `npm run build` then `npm start`, and open `http://127.0.0.1:3001`. Tests make no live model requests. CI includes production-build browser tests and a constrained deployment-container smoke test.
+For a production preview, run `npm run build` then `npm start`, and open `http://127.0.0.1:3001`. Tests make no live model requests. CI includes production-build browser tests and a constrained deployment-container smoke test. The [release verification record](docs/evidence/firststep-release-verification.json) includes 19 additional checks against the hosted release.
 
 ## Documentation
 
