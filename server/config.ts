@@ -8,9 +8,12 @@ export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 export const DATA_DIR = path.resolve(process.env.ACCESSFIX_DATA_DIR || path.join(ROOT, '.accessfix'));
 export const RUNS_DIR = path.join(DATA_DIR, 'runs');
 export const fixtures: Fixture[] = [
-  { id: 'signup', name: 'React signup', description: 'Keyboard and form-label barriers', file: 'examples/signup/Signup.tsx' },
-  { id: 'team', name: 'Team invitation', description: 'Validation feedback and focus barriers', file: 'examples/team/Signup.tsx' },
-  { id: 'healthy', name: 'Working signup', description: 'A passing baseline; no patch needed', file: 'examples/healthy/Signup.tsx' },
+  { id: 'signup', name: 'React signup', description: 'Keyboard and form-label barriers', file: 'examples/signup/Signup.tsx', contract: 'signup' },
+  { id: 'team', name: 'Team invitation', description: 'Validation feedback and focus barriers', file: 'examples/team/Signup.tsx', contract: 'signup' },
+  { id: 'healthy', name: 'Working signup', description: 'A passing baseline; no patch needed', file: 'examples/healthy/Signup.tsx', contract: 'signup' },
+  { id: 'login', name: 'Account login', description: 'Credential labels and keyboard submission', file: 'examples/login/Login.tsx', contract: 'login' },
+  { id: 'dialog', name: 'Confirmation dialog', description: 'Modal semantics, focus containment and return', file: 'examples/dialog/Confirmation.tsx', contract: 'dialog' },
+  { id: 'navigation', name: 'Workspace navigation', description: 'Keyboard destinations and current-page state', file: 'examples/navigation/Navigation.tsx', contract: 'navigation' },
 ];
 export function getFixture(id: string) { return fixtures.find(item => item.id === id); }
 export function fixtureSource(id: FixtureId) { return readFileSync(path.join(ROOT, getFixture(id)!.file), 'utf8'); }

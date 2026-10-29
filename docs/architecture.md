@@ -12,7 +12,7 @@ AccessFix separates model proposals from acceptance. The model supplies one comp
 | Provider adapter | `server/provider.ts` | Server-side Nebius authentication, NVIDIA model request and strict tool-call parsing |
 | Repair context | `server/repair-context.ts` | Readable source context and advisory diagnostics for rejected candidates |
 | Browser checks | Playwright and axe-core | User interactions, validation behavior, accessibility scans and screenshots |
-| Component harness | TypeScript, esbuild and React | Strict source type checking, React-only bundling and a wrapper-owned submit callback |
+| Component harness | TypeScript, esbuild and React | Strict source type checking, React-only bundling and wrapper-owned submit, confirmation and navigation callbacks |
 
 ## Repair lifecycle
 
@@ -29,17 +29,17 @@ The provider receives original and previous-candidate source as separate plain-t
 
 ## Protected behavior
 
-The harness owns the confirmation screen and records the component's `onSubmit` payload. Checks exercise labels, keyboard completion, linked validation messages, focus, valid submission, malformed email, short passwords, required consent, axe rules and browser runtime errors. See the [component contract](component-contract.md) for selectors and semantics.
+The selected contract protects signup, login, confirmation dialog or navigation behavior. The harness owns callbacks and outcome screens. Signup and login checks exercise labels, keyboard completion, validation, focus and exact payloads; dialog checks protect focus containment, Escape, Cancel and explicit confirmation; navigation checks protect semantic links, destinations and current-page state. All contracts run axe and browser-runtime checks. See the [component contract](component-contract.md) for selectors and semantics.
 
 Protected source files are outside the model's replacement scope. Generated code still executes inside a browser and can access page globals; this design is not a security boundary against deliberately hostile components. Import restrictions, browser request blocking and CSP reduce the available surface but do not establish a multitenant sandbox.
 
-New run fingerprints cover both `server/checks.ts` and `server/fixture-host.ts`, so changes to the TypeScript/build gate are included. Historical runs made before this gate was added fingerprinted only the browser-check source and retain their original verdicts; a historical browser pass does not establish strict TypeScript validity.
+New run fingerprints cover `server/checks.ts`, `server/contract-checks.ts`, `server/focus-trace.ts` and `server/fixture-host.ts`, so browser checks, trace collection and the TypeScript/build gate are included. Historical runs made before this gate was added fingerprinted only the browser-check source and retain their original verdicts; a historical browser pass does not establish strict TypeScript validity.
 
 ## Data flow and storage
 
 The API key is read only by the backend from the process environment or local `.env`. The browser receives configuration status, never the key. Live repair sends source, findings and retry context to the configured HTTPS Nebius endpoint. The adapter permits only Nebius hostnames and NVIDIA model identifiers.
 
-Local JSON records, PNG captures and CLI exports are stored under `.accessfix/runs/<id>/`. Records may contain complete component source. Dashboard reports embed images for offline review. There is no database or remote artifact store. Hosted mode uses a configurable data directory and shared judge credentials for all UI, API and artifact access. It restores one curated public-fixture recording from `demo/verified-signup`; other local run history is never included in the image.
+Local JSON records, PNG captures and CLI exports are stored under `.accessfix/runs/<id>/`. Records may contain complete component source. Keyboard traces capture actual browser screenshots and the focused element after each bounded keyboard action. The replay compares before/candidate frames; it does not simulate assistive technology. Dashboard reports embed captures and trace frames for offline review. Replaying the curated AI candidate creates a fresh verification record with provenance and makes no model request; the historical record stays unchanged. There is no database or remote artifact store. Hosted mode uses a configurable data directory and shared judge credentials for all UI, API and artifact access. It restores one curated public-fixture recording from `demo/verified-signup`; other local run history is never included in the image.
 
 Dashboard concurrency is limited to one active run per API process. Separate CLI processes are not coordinated by a shared queue. Startup recovery marks interrupted records as errors; avoid restarting the API while a separate CLI run is active in the same data directory.
 

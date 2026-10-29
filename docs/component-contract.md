@@ -1,22 +1,54 @@
-# Standalone signup component contract
+# Standalone React component contracts
 
-AccessFix v0.1 runs a component in its own local React harness. It does not yet launch an arbitrary repository, authenticate into a product, or test its real backend. The CLI supports your own component when it follows this contract, plus the included `signup`, `team`, and `healthy` examples.
+AccessFix runs a standalone component in a local React harness. It supports four explicit contracts; it does not launch arbitrary repositories, authenticate into a product, or test a real backend.
 
-1. Export one React component as default from a UTF-8 `.tsx` file, up to 40 KB. It must pass strict TypeScript checking with the installed React types before browser execution. Only imports from React are supported. Extract app-specific dependencies before using this version.
-2. Accept `onSubmit({ email: string, password: string, terms: boolean })` as a prop. Call it exactly once after successful validation. The protected wrapper owns the confirmation screen.
-3. Use `data-testid="email"`, `"password"`, `"terms"`, and `"submit"` on the respective controls. These selectors form the explicit test contract; they are not inferred by the model.
-4. Keep accessible names `Email`, `Password`, and `I agree to the terms`. Signup requires a valid email, a password of at least 8 characters, and checked consent.
-5. Error text must be associated with its invalid field. On invalid submit, move focus to the first invalid field.
+Every component must be a UTF-8 `.tsx` file of at most 40 KB, with one default React export and React-only imports. Strict TypeScript checking precedes browser execution. Test IDs and callbacks are the declared interface, not values inferred by the model. The original file stays unchanged.
+
+| Contract | Props | Required test IDs | Protected behavior |
+|---|---|---|---|
+| `signup` | `onSubmit({ email, password, terms })` | `email`, `password`, `terms`, `submit` | Valid email, password of at least 8 characters, required consent, one unchanged payload |
+| `login` | `onSubmit({ email, password })` | `email`, `password`, `submit` | Valid email, nonempty masked password, one unchanged credential payload |
+| `dialog` | `onConfirm()` | `open-dialog`, `dialog`, `cancel`, `confirm` | Opening never confirms; Cancel/Escape close without confirmation; Publish confirms once |
+| `navigation` | `onNavigate(destination)` | `nav-overview`, `nav-projects`, `nav-settings` | Each activation preserves its destination and fires once; no callback on rendering |
+
+## Accessibility checks
+
+Signup and login require associated `Email` and `Password` labels, keyboard submission, linked live error messages and focus on the first invalid field. Signup also requires the accessible consent name `I agree to the terms`.
+
+The dialog is named `Publish changes?`. It has modal semantics, initially focuses Cancel, contains Tab/Shift+Tab while open, and returns focus to the trigger after Escape. Native `dialog` is supported. Navigation exposes the `Workspace` landmark, named links to `#overview`, `#projects` and `#settings`, and exactly one `aria-current="page"` entry, initially overview.
+
+All contracts run axe scans in initial and active/error states and reject browser runtime errors. Signup, login and dialog currently have ten checks; navigation has eight. Check counts describe these contracts, not percentages of WCAG conformance.
+
+## Run a component
 
 ```sh
-npm run accessfix -- --component ./path/to/Signup.tsx --mode audit
-npm run accessfix -- --component ./path/to/Signup.tsx --mode repair
+npm run accessfix -- --component ./Signup.tsx --mode audit
+npm run accessfix -- --component ./Login.tsx --contract login --mode audit
+npm run accessfix -- --component ./Confirmation.tsx --contract dialog --mode repair --max-attempts 1
+npm run accessfix -- --component ./Navigation.tsx --contract navigation --mode audit
 ```
 
-`repair` sends the supplied source and browser observations to the configured NVIDIA model at Nebius. Only use source you are authorized to share. The original file is never modified. The model can return a replacement component or abstain; it has no filesystem or shell tools. Imports are restricted at build time; browser requests are blocked except for the temporary fixture document.
+`repair` sends source and findings to NVIDIA Nemotron through Nebius Token Factory and can consume inference credits. The model can propose the supplied component or abstain; it has no shell or filesystem tools. Only authorized source should be shared. Browser requests are blocked except for the temporary fixture document.
 
-Inspect `.accessfix/runs/<id>/report.html`, `run.json`, the PNG captures and (when accepted) `accepted.patch`. For a custom component, the patch targets its basename; review and apply from that component's directory. The downloadable tool is a local developer tool, not an isolation boundary for hostile multitenant execution.
+## Fixtures and verification exercises
 
-The identical strict type/build gate and protected browser checks run before and after: accessible labels, keyboard task completion, linked live errors, error focus, valid submission payload, invalid email, short password, consent, axe findings in initial/invalid states, and browser runtime errors. A source and verification-suite SHA-256 are saved; the latter covers the browser checks and component compiler. This verifies this contract, not complete accessibility. It does not exercise real screen reader output or a backend's validation. A changed product contract requires changing the protected tests deliberately, outside the model loop.
+The browser offers `signup`, `team`, `healthy`, `login`, `dialog` and `navigation`. Team invitation is a second signup implementation. The healthy signup is a clean baseline and skips inference.
 
-The second implementation, `examples/team/Signup.tsx`, uses an object-state pattern and already has working labels/keyboard controls. It exercises the validation/focus repair path. This small fixture set is a functional smoke evaluation, not evidence of general repair accuracy.
+```sh
+npm run accessfix -- --fixture login --mode verify-good
+npm run accessfix -- --fixture dialog --mode verify-regression
+npm run accessfix -- --fixture navigation --mode verify-good
+npm run accessfix -- --fixture signup --mode verify-recorded
+```
+
+Prepared good and regressing candidates test the independent gate without a model request. Regressions remove required consent/password validation, confirm on Cancel, or change a navigation destination. These prepared results are not AI repair evaluations.
+
+`verify-recorded` freshly checks the unchanged candidate from the genuine saved NVIDIA/Nebius signup repair. It records a new run and current verification fingerprint, preserves the historical evidence, and makes no new inference request. It is available only for React signup.
+
+## Keyboard evidence and artifacts
+
+Fresh runs record actual Chromium screenshots after keyboard actions, along with observed focus target and bounds. The Keyboard replay view can play, pause and step through baseline/candidate traces. The visual outline is a viewer overlay; it never modifies the tested component. Shorter traces hold their last frame. Historical runs without traces remain readable and explain how to capture fresh evidence.
+
+The CLI writes `.accessfix/runs/<id>/report.html`, `run.json`, captures and an accepted patch when every check passes. Reports embed the keyboard captures for offline review. Custom-component patches target the supplied basename; review the destination before applying.
+
+The source and protected suite each have a SHA-256 fingerprint. The suite fingerprint covers the compiler, browser checks and focus recorder. All baseline checks are replayed unchanged against the candidate. These fixtures are a functional evaluation, not evidence of general repair accuracy. Real screen readers, application integration and user testing remain manual. The local harness is not an isolation boundary for hostile multitenant workloads.

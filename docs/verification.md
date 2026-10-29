@@ -72,3 +72,9 @@ Local artifacts live in `.accessfix/runs/` and are excluded from version control
 ## Limits
 
 This evaluation does not cover arbitrary repositories, real backend validation, authenticated application flows, real screen-reader output, production multitenancy or customer pilots. Human review and assistive-technology testing remain necessary.
+
+## Additional contracts and keyboard replay
+
+Login, confirmation dialog and navigation now have separate protected browser contracts. Automated tests reproduce their fixture barriers, accept prepared accessible candidates, and reject changed password, cancellation or destination behavior. These tests make no model requests and do not establish AI repair reliability for the new contracts.
+
+Fresh runs capture keyboard steps with screenshots and observed focus bounds. The original saved NVIDIA/Nebius candidate can be replayed against the current suite through `verify-recorded`, without editing its source or making a new inference request. Historical evidence retains its original fingerprint; fresh replay produces a separate run and fingerprint.

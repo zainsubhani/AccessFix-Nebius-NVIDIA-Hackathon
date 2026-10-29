@@ -2,14 +2,14 @@ import { randomUUID, createHash } from 'node:crypto';
 import { readFileSync, mkdirSync, writeFileSync, renameSync, readdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { createTwoFilesPatch } from 'diff';
-import { ACTIVE_STATES, type Run, type RunMode } from '../shared/types.js';
+import { ACTIVE_STATES, type ComponentContract, type Run, type RunMode } from '../shared/types.js';
 import { ROOT, RUNS_DIR, fixtureSource, getFixture, providerConfig } from './config.js';
 import { inspectComponent, evaluateCandidate } from './checks.js';
 import { requestProposal, type Proposal } from './provider.js';
 import { createRepairFeedback, type RepairFeedback } from './repair-context.js';
 
 export const sha256 = (value: string) => createHash('sha256').update(value).digest('hex');
-export const verificationHash = () => sha256(JSON.stringify(['server/checks.ts', 'server/fixture-host.ts'].map(file => ({ file, source: readFileSync(path.join(ROOT, file), 'utf8') }))));
+export const verificationHash = () => sha256(JSON.stringify(['server/checks.ts', 'server/contract-checks.ts', 'server/focus-trace.ts', 'server/fixture-host.ts'].map(file => ({ file, source: readFileSync(path.join(ROOT, file), 'utf8') }))));
 export const runDirectory = (id: string) => path.join(RUNS_DIR, id);
 export function saveRun(run: Run) {
   const directory = runDirectory(run.id); mkdirSync(directory, { recursive: true });
@@ -30,22 +30,30 @@ export function recoverInterruptedRuns() {
     run.summary = run.error; run.finishedAt = new Date().toISOString(); saveRun(run);
   }
 }
-export function createRun(fixture: string, mode: RunMode, custom?: { source: string; name: string; file: string }): Run {
+export function createRun(fixture: string, mode: RunMode, custom?: { source: string; name: string; file: string; contract?: ComponentContract }): Run {
   const item = getFixture(fixture);
   if (!item && !custom) throw new Error('Unknown fixture.');
   const source = custom?.source ?? fixtureSource(item!.id);
   const run: Run = {
     id: randomUUID(), fixture, fixtureName: custom?.name || item!.name, file: custom?.file || item!.file, mode, state: 'queued', createdAt: new Date().toISOString(),
-    events: [], attempts: [], summary: 'Waiting for the browser runner.', source,
+    events: [], attempts: [], summary: 'Waiting for the browser runner.', source, contract: custom?.contract || item?.contract || 'signup',
     sourceHash: sha256(source), contractHash: verificationHash(),
     usage: { inputTokens: 0, outputTokens: 0, requests: 0, latencyMs: 0 },
-    humanChecks: ['Screen reader announcements and reading order need manual testing with assistive technology.', 'This component harness does not test your full app, backend, authentication, or surrounding routes.', 'Automated checks cover the specified signup journey; they do not establish complete WCAG conformance.'],
+    humanChecks: ['Screen reader announcements and reading order need manual testing with assistive technology.', 'This component harness does not test your full app, backend, authentication, or surrounding routes.', 'Automated checks cover the selected component contract; they do not establish complete WCAG conformance.'],
   };
   if (mode === 'repair') run.model = providerConfig().model;
   saveRun(run); return run;
 }
 
-export function knownCandidate(kind: 'good' | 'regression') {
+export function knownCandidate(kind: 'good' | 'regression', contract: ComponentContract = 'signup') {
+  if (contract !== 'signup') {
+    const files = { login: 'login/AccessibleLogin.tsx', dialog: 'dialog/AccessibleConfirmation.tsx', navigation: 'navigation/AccessibleNavigation.tsx' };
+    const good = readFileSync(path.join(ROOT, 'examples', files[contract]), 'utf8');
+    if (kind === 'good') return good;
+    if (contract === 'login') return good.replace(/    if \(!password\) \{[^\n]+\}\n/, '');
+    if (contract === 'dialog') return good.replace('onClick={close}>Cancel', 'onClick={() => { onConfirm(); close(); }}>Cancel');
+    return good.replace('onNavigate(destination);', 'onNavigate("overview");');
+  }
   const good = fixtureSource('healthy');
   if (kind === 'good') return good;
   return good.replace(/    if \(!terms\) \{[\s\S]*?\n    \}/, '    // Deliberate verification exercise: this candidate incorrectly removes required consent.');
@@ -59,7 +67,7 @@ export async function executeRun(run: Run, signal: AbortSignal, propose: typeof 
   const inspectionTimeoutMs = run.executionProfile === 'free-demo' ? 180_000 : 60_000;
   const inspect = async (source: string, prefix: string) => {
     const deadline = AbortSignal.timeout(inspectionTimeoutMs);
-    try { return await inspectComponent(source, runDirectory(run.id), prefix, AbortSignal.any([signal, deadline]), run.executionProfile); }
+    try { return await inspectComponent(source, runDirectory(run.id), prefix, AbortSignal.any([signal, deadline]), run.executionProfile, run.contract || 'signup'); }
     catch (error) {
       if (!signal.aborted && deadline.aborted) throw new Error(`Browser inspection exceeded its ${inspectionTimeoutMs / 1000}-second time limit. Try again when the runner is less busy.`);
       throw error;
@@ -68,7 +76,7 @@ export async function executeRun(run: Run, signal: AbortSignal, propose: typeof 
   try {
     if (options.maxAttempts !== undefined && ![1, 2].includes(options.maxAttempts)) throw new Error('Maximum attempts must be 1 or 2.');
     if (!['local', 'free-demo'].includes(run.executionProfile)) throw new Error('Unknown browser execution profile.');
-    transition('auditing', 'Reproducing the signup journey in Chromium.');
+    transition('auditing', `Reproducing the ${run.contract || 'signup'} journey in Chromium.`);
     run.baseline = await inspect(run.source, 'before'); saveRun(run);
     if (run.baseline.checks.every(check => check.passed)) {
       transition('clean', 'All automated checks passed on the baseline. No patch is needed for these checks.');
@@ -85,10 +93,15 @@ export async function executeRun(run: Run, signal: AbortSignal, propose: typeof 
         if (run.mode === 'repair') {
           const requestedAt = Date.now();
           run.usage.requests += 1; saveRun(run);
-          try { proposal = await propose(run.source, run.baseline, feedback, signal); }
+          try { proposal = await propose(run.source, run.baseline, feedback, signal, run.contract || 'signup'); }
           finally { run.usage.latencyMs += Date.now() - requestedAt; saveRun(run); }
         }
-        else proposal = { source: knownCandidate(run.mode === 'verify-good' ? 'good' : 'regression'), rationale: run.mode === 'verify-good' ? 'Known fixture patch: semantic labels, keyboard submit, linked validation and focus management.' : 'Deliberately flawed fixture: accessibility repairs with the consent validation removed. The gate should reject it.', usage: { inputTokens: 0, outputTokens: 0, requests: 0, latencyMs: 0 } };
+        else if (run.mode === 'verify-recorded') {
+          const recorded = JSON.parse(readFileSync(path.join(ROOT, 'demo/verified-signup/run.json'), 'utf8')) as Run;
+          if (run.fixture !== 'signup' || run.sourceHash !== recorded.sourceHash || !recorded.attempts.some(item => item.accepted)) throw new Error('Recorded candidate does not match this baseline.');
+          run.replayedFrom = recorded.id;
+          proposal = { source: recorded.attempts.find(item => item.accepted)!.source, rationale: 'Fresh verification of the unedited candidate from the recorded NVIDIA/Nebius repair. No new model request.', usage: { inputTokens: 0, outputTokens: 0, requests: 0, latencyMs: 0 } };
+        } else proposal = { source: knownCandidate(run.mode === 'verify-good' ? 'good' : 'regression', run.contract), rationale: run.mode === 'verify-good' ? 'Prepared accessible candidate for the selected contract. No model request.' : 'Prepared regression candidate: removes required validation, confirms on Cancel, or changes a destination. The independent gate must reject it.', usage: { inputTokens: 0, outputTokens: 0, requests: 0, latencyMs: 0 } };
         for (const key of ['inputTokens', 'outputTokens'] as const) run.usage[key] += proposal.usage[key];
         if (!proposal.source) { transition('unresolved', `The model abstained: ${proposal.rationale}`); break; }
         const attempt: Run['attempts'][number] = { number: index, rationale: proposal.rationale, source: proposal.source, patch: createTwoFilesPatch(`a/${run.file}`, `b/${run.file}`, run.source, proposal.source, 'original', 'candidate'), accepted: false, regressions: [] };

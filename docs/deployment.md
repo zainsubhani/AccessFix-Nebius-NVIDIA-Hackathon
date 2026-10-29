@@ -8,8 +8,9 @@ Deploy this repository as a Render Blueprint using `render.yaml`. The Blueprint 
 
 The demo offers:
 
-- Fresh audits of the three included public fixtures.
-- A verification lab with explicitly prepared good and regressing candidates.
+- Fresh audits of the six included public fixtures across four contracts.
+- A verification lab with explicitly prepared good and regressing candidates for signup, login, dialog and navigation, plus fresh replay of the recorded signup repair.
+- Before/candidate keyboard traces with actual browser frames and focus position.
 - A clearly labeled recording of the real NVIDIA/Nebius signup repair, including source diff, screenshots, checks, token usage and downloadable report.
 - One active run at a time and a shared limit of 20 runs per UTC hour.
 
@@ -17,7 +18,7 @@ No Nebius API key is needed for this deployment. `ACCESSFIX_EPHEMERAL=true` requ
 
 Render Free currently provides 512 MB RAM and 0.1 CPU. Services sleep after 15 minutes without traffic and can take about a minute to wake. Files disappear on restart, redeploy or spin-down; the curated recording is restored at startup, while new runs and the hourly counter can disappear. Free instance hours and bandwidth are shared across the workspace. See [Render's free-service limits](https://render.com/docs/free) and [compute plans](https://render.com/docs/compute-plans). Do not add a paid disk or change the plan to run this Blueprint.
 
-The free mode allows up to three minutes per component inspection, including compilation and browser execution; a two-component verification exercise can take longer. It also allows 10 seconds for browser action readiness and 30 seconds for navigation, compared with 1.5 and 5 seconds locally. Both baseline and candidate use the same timing profile; run records and reports identify it. The ten checks and acceptance conditions remain the same. Before recording a demo, open the URL early, let the service wake, and run the audit once. The resource-constrained container smoke test exercises real Chromium, but it cannot guarantee Render's latency or availability.
+The free mode allows up to three minutes per component inspection, including compilation and browser execution; a two-component verification exercise can take longer. It also allows 10 seconds for browser action readiness and 30 seconds for navigation, compared with 1.5 and 5 seconds locally. Both baseline and candidate use the same timing profile; run records and reports identify it. Each contract uses the same checks and acceptance conditions in both timing profiles. Before recording a demo, open the URL early, let the service wake, and run the audit once. The resource-constrained container smoke test exercises real Chromium, but it cannot guarantee Render's latency or availability.
 
 ## Container verification
 

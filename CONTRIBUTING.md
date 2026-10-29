@@ -1,6 +1,6 @@
 # Contributing
 
-AccessFix is an experimental local accessibility workflow for a narrow React signup contract. Changes should preserve the separation between model-generated proposals and independently verified acceptance.
+AccessFix is an experimental local accessibility workflow for explicit React component contracts. Changes should preserve the separation between model-generated proposals and independently verified acceptance.
 
 ## Development setup
 

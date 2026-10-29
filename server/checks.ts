@@ -3,7 +3,9 @@ import axe from 'axe-core';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { compileFixture, startFixture } from './fixture-host.js';
-import type { Check, Evidence, ExecutionProfile, Violation } from '../shared/types.js';
+import type { Check, ComponentContract, Evidence, ExecutionProfile, Violation } from '../shared/types.js';
+import { focusRecorder } from './focus-trace.js';
+import { inspectContractComponent } from './contract-checks.js';
 
 const EMAIL = 'keyboard.user@example.com';
 const PASSWORD = 'good-password-42';
@@ -29,7 +31,8 @@ function briefError(error: unknown) {
 }
 
 // These checks are outside every model-writeable file. Both versions use this exact function.
-export async function inspectComponent(source: string, outputDir: string, prefix: string, signal?: AbortSignal, profile: ExecutionProfile = 'local'): Promise<Evidence> {
+export async function inspectComponent(source: string, outputDir: string, prefix: string, signal?: AbortSignal, profile: ExecutionProfile = 'local', contract: ComponentContract = 'signup'): Promise<Evidence> {
+  if (contract !== 'signup') return inspectContractComponent(source, outputDir, prefix, contract, signal, profile);
   signal?.throwIfAborted();
   const started = Date.now();
   const html = await compileFixture(source);
@@ -54,6 +57,7 @@ export async function inspectComponent(source: string, outputDir: string, prefix
     const screenshot = `${prefix}.png`;
     await page.screenshot({ path: path.join(outputDir, screenshot) });
     const checks: Check[] = [];
+    const recorder = focusRecorder(page, outputDir, prefix);
     const run = async (id: string, name: string, category: Check['category'], test: () => Promise<string>) => {
       await reset();
       try { checks.push({ id, name, category, passed: true, detail: await test() }); }
@@ -67,15 +71,17 @@ export async function inspectComponent(source: string, outputDir: string, prefix
       return 'Email, password and consent can be identified by their accessible names.';
     });
     await run('keyboard', 'Complete signup using only the keyboard', 'accessibility', async () => {
-      await tabTo(page, 'email'); await page.keyboard.type(EMAIL);
-      await tabTo(page, 'password'); await page.keyboard.type(PASSWORD);
-      await tabTo(page, 'terms'); await page.keyboard.press('Space');
-      await tabTo(page, 'submit'); await page.keyboard.press('Enter');
+      await recorder.capture('Start keyboard journey');
+      await recorder.tabTo('email'); await page.keyboard.type(EMAIL); await recorder.capture('Enter email');
+      await recorder.tabTo('password'); await page.keyboard.type(PASSWORD); await recorder.capture('Enter password (hidden)');
+      await recorder.tabTo('terms'); await recorder.key('Space');
+      await recorder.tabTo('submit'); await recorder.key('Enter');
       await page.waitForTimeout(100);
       const events = await submissions(page);
       assert(events.length === 1, 'Pressing Enter on the submit control did not complete signup exactly once.');
       assert(JSON.stringify(events[0]) === JSON.stringify({ email: EMAIL, password: PASSWORD, terms: true }), 'The keyboard journey submitted a different payload.');
       assert(await page.getByRole('status').filter({ hasText: 'Account created' }).isVisible(), 'Signup did not reach the confirmation screen.');
+      recorder.trace.complete = true;
       return 'Tab → email → password → consent → Enter reached the confirmation screen.';
     });
     await run('validation-feedback', 'Validation errors are announced and linked', 'accessibility', async () => {
@@ -143,7 +149,7 @@ export async function inspectComponent(source: string, outputDir: string, prefix
     checks.push({ id: 'axe', name: 'Automated accessibility scan', category: 'accessibility', passed: violations.size === 0, detail: violations.size ? `${violations.size} axe rule violation(s) across initial and invalid states.` : 'No axe violations found in the initial and invalid states for the selected WCAG tags.' });
     checks.push({ id: 'runtime', name: 'Component renders without runtime errors', category: 'regression', passed: consoleErrors.length === 0, detail: consoleErrors.length ? consoleErrors.join('; ') : 'No browser page errors during the journey.' });
     signal?.throwIfAborted();
-    return { checks, violations: [...violations.values()], screenshot, durationMs: Date.now() - started, consoleErrors };
+    return { checks, violations: [...violations.values()], screenshot, durationMs: Date.now() - started, consoleErrors, focusTrace: recorder.trace };
   } finally {
     signal?.removeEventListener('abort', abort);
     await browser?.close(); await host.close();

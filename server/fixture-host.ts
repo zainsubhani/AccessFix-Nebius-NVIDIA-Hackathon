@@ -3,10 +3,13 @@ import { createServer } from 'node:http';
 import path from 'node:path';
 import ts from 'typescript';
 import { ROOT } from './config.js';
+import type { ComponentContract } from '../shared/types.js';
+import { isContract } from '../shared/contracts.js';
 
 const fixtureCss = `*{box-sizing:border-box}body{margin:0;background:#e7f1ef;color:#182536;font:14px/1.5 system-ui,sans-serif}main{min-height:100vh;display:grid;place-items:center;padding:18px}form{background:#fff;border:1px solid #dce6e3;border-radius:10px;padding:24px;display:grid;gap:14px;width:330px;max-width:100%}.form-eyebrow{font-size:10px;letter-spacing:1.4px;color:#536d68;font-weight:700}h1{font-size:22px;letter-spacing:-.8px;line-height:1.2;margin:0 0 2px}.form-subtitle{font-size:12px;color:#566779;margin:0 0 24px}.field{display:grid;gap:5px;margin:0}.field label,.field span{font-size:12px;font-weight:600}input:not([type=checkbox]){height:36px;border:1px solid #b6c5c2;border-radius:5px;padding:0 10px;width:100%;font:13px system-ui}input:focus-visible,button:focus-visible{outline:3px solid #126b61;outline-offset:3px}.terms{display:flex;align-items:center;gap:7px;font-size:11px;margin:0}.terms input{accent-color:#126b61;width:15px;height:15px}.submit{display:block;width:100%;text-align:center;border:0;border-radius:5px;background:#126b61;color:#fff;padding:11px;font:600 13px system-ui;cursor:pointer}.form-footnote{text-align:center;color:#566779;font-size:10px;margin:16px 0 0}.form-error{color:#ad3442;font-size:12px}.receipt{background:white;padding:32px;border-radius:10px;text-align:center}`;
 
-export async function compileFixture(source: string): Promise<string> {
+export async function compileFixture(source: string, contract: ComponentContract = 'signup'): Promise<string> {
+  if (!isContract(contract)) throw new Error('Unknown component contract.');
   if (Buffer.byteLength(source) > 40_000) throw new Error('Component exceeds the 40 KB source limit.');
   const parsed = ts.createSourceFile('Signup.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   const inspect = (node: ts.Node) => {
@@ -44,10 +47,15 @@ export async function compileFixture(source: string): Promise<string> {
     });
     throw new Error(`Component failed strict TypeScript checking (${diagnostics.length} errors). ${details.join(' ')} Fix the types without disabling checks.`);
   }
+  const journey = contract === 'signup' || contract === 'login'
+    ? `<main>{done ? <section className="receipt" role="status"><h1>${contract === 'signup' ? 'Account created' : 'Signed in'}</h1><p>Your journey is complete.</p></section> : <Signup onSubmit={value=>{events.push(JSON.parse(JSON.stringify(value)));setDone(true)}}/>}</main>`
+    : contract === 'dialog'
+      ? '<main><Signup onConfirm={()=>{events.push({confirmed:true});setDone(true)}}/>{done && <p role="status">Changes confirmed</p>}</main>'
+      : '<main><Signup onNavigate={value=>{events.push(value);setDone(value)}}/>{done && <p role="status">Destination: {done}</p>}</main>';
   const result = await build({
     stdin: { contents: `import React from 'react'; import {createRoot} from 'react-dom/client'; import Signup from 'accessfix-component';
       const events = []; Object.defineProperty(window, '__ACCESSFIX_EVENTS__', {value:events});
-      function App(){const [done,setDone]=React.useState(false);return <main>{done ? <section className="receipt" role="status"><h1>Account created</h1><p>Your signup journey is complete.</p></section> : <Signup onSubmit={value=>{events.push(JSON.parse(JSON.stringify(value)));setDone(true)}}/>}</main>}
+      function App(){const [done,setDone]=React.useState(false);return ${journey}}
       createRoot(document.getElementById('root')).render(<App/>);`, loader: 'tsx', resolveDir: ROOT },
     bundle: true, write: false, format: 'iife', platform: 'browser', minify: true,
     define: { 'process.env.NODE_ENV': '"production"' }, jsx: 'automatic', logLevel: 'silent',
@@ -62,7 +70,8 @@ export async function compileFixture(source: string): Promise<string> {
   });
   // Escape closing script sequences in source so a candidate cannot escape its script element.
   const bundle = result.outputFiles[0].text.replace(/<\/script/gi, '<\\/script');
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AccessFix signup fixture</title><style>${fixtureCss}</style></head><body><div id="root"></div><script>${bundle}</script></body></html>`;
+  const extraCss = '.component-card{background:#fff;padding:28px;border:1px solid #dce6e3;border-radius:10px;width:360px;max-width:100%}button,a{font:inherit}button{cursor:pointer;padding:10px 16px;border:1px solid #9eafab;border-radius:5px;background:white;color:#182536}a:focus-visible{outline:3px solid #126b61;outline-offset:3px}dialog,.dialog-card{padding:28px;border:1px solid #dce6e3;border-radius:10px;background:white;color:#182536;max-width:420px}dialog::backdrop,.dialog-backdrop{background:#18253688}.dialog-backdrop{position:fixed;inset:0;display:grid;place-items:center}.dialog-card button,dialog button{margin-right:12px}.nav-items{display:grid;gap:8px}.nav-items a,.nav-items div{display:block;padding:12px;color:#182536;text-decoration:none;cursor:pointer}.nav-items .selected{background:#e7f1ef;border-radius:5px;color:#126b61}';
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AccessFix ${contract} fixture</title><style>${fixtureCss}${extraCss}</style></head><body><div id="root"></div><script>${bundle}</script></body></html>`;
 }
 
 export async function startFixture(html: string) {
