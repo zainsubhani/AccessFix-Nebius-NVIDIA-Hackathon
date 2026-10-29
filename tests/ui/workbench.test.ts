@@ -145,3 +145,41 @@ test('dialog contract and before/after keyboard replay work on desktop and mobil
     assert.deepEqual(errors, []);
   } finally { await browser.close(); }
 });
+
+test('draft export requires a reviewed destination and recovers a failed creation', { timeout: 60000 }, async () => {
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 1536, height: 1024 } });
+  const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
+  try {
+    await page.goto(URL);
+    await page.locator('.verification-lab > summary').click();
+    await page.getByRole('button', { name: 'Test a good patch', exact: true }).click();
+    await page.getByRole('link', { name: 'Download patch', exact: true }).waitFor({ timeout: 30000 });
+    await page.route('**/api/github', route => route.fulfill({ json: { enabled: true, repository: 'example/project' } }));
+    await page.route('**/github/preview', route => route.fulfill({ json: { id: 'test-preview', repository: 'example/project', path: 'src/Signup.tsx', base: 'main', baseSha: '0123456789abcdef', branch: 'accessfix/test-run', title: 'Fix signup accessibility in Signup.tsx', patch: '--- a/src/Signup.tsx\n+++ b/src/Signup.tsx\n+<button type="submit">Create account</button>' } }));
+    let posts = 0;
+    await page.route('**/api/runs/*/github', route => {
+      posts++;
+      assert.deepEqual(route.request().postDataJSON(), { previewId: 'test-preview' });
+      return posts === 1 ? route.fulfill({ status: 502, json: { error: 'Test: GitHub response interrupted. Retry this export.' } }) : route.fulfill({ json: { number: 12, url: 'https://github.com/example/project/pull/12', draft: true, state: 'open' } });
+    });
+    await page.locator('.github-export > summary').click();
+    await page.getByLabel('Repository component path').fill('src/Signup.tsx');
+    assert.equal(await page.getByRole('button', { name: 'Create draft PR on GitHub', exact: true }).count(), 0);
+    await page.getByRole('button', { name: 'Preview draft PR', exact: true }).click();
+    await page.getByRole('region', { name: 'GitHub draft preview' }).waitFor();
+    assert.equal(posts, 0);
+    await noOverflow(page); await a11y(page);
+    await page.locator('.github-export').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: '/tmp/accessfix-draft-preview-desktop.png' });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await noOverflow(page); await a11y(page);
+    await page.locator('.export-preview').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: '/tmp/accessfix-draft-preview-mobile.png' });
+    await page.getByRole('button', { name: 'Create draft PR on GitHub', exact: true }).click();
+    await page.getByRole('alert').filter({ hasText: 'Test: GitHub response interrupted.' }).waitFor();
+    await page.getByRole('button', { name: 'Create draft PR on GitHub', exact: true }).click();
+    assert.equal(await page.getByRole('link', { name: 'Open pull request', exact: true }).getAttribute('href'), 'https://github.com/example/project/pull/12');
+    assert.equal(posts, 2); assert.deepEqual(errors, []);
+  } finally { await browser.close(); }
+});

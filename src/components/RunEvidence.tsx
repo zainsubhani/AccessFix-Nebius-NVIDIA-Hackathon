@@ -4,6 +4,7 @@ import type { Run } from '../../shared/types';
 import { ACTIVE_STATES } from '../../shared/types';
 import { Button, Status } from './ui';
 import { FocusReplay } from './FocusReplay';
+import { GitHubExport } from './GitHubExport';
 
 function Result({ value }: { value?: boolean }) { return value === undefined ? <span className="result neutral"><Minus size={14} />Pending</span> : value ? <span className="result pass"><Check size={14} />Pass</span> : <span className="result fail"><X size={14} />Fail</span>; }
 export function RunEvidence({ run }: { run: Run }) {
@@ -30,6 +31,7 @@ export function RunEvidence({ run }: { run: Run }) {
     </>}
     {view === 'patch' && (attempt ? <div className="diff-view"><p><CheckCheck size={16} />{attempt.accepted ? 'Passed the automated gate. Review the patch before applying it.' : 'This candidate has not been accepted. Your source is unchanged.'}</p><p className="muted">{attempt.rationale}</p><pre aria-label="Proposed source changes"><code>{attempt.patch.split('\n').map((line, index) => <span key={index} className={line.startsWith('+') ? 'line-added' : line.startsWith('-') ? 'line-removed' : ''}>{line}{'\n'}</span>)}</code></pre></div> : <div className="inline-empty"><FileCode2 size={24} /><p>No patch has been proposed for this run.</p></div>)}
     {view === 'events' && <ol className="event-list">{run.events.map((event, index) => <li key={`${event.at}-${index}`}><time dateTime={event.at}>{new Date(event.at).toLocaleTimeString()}</time><span>{event.message}</span></li>)}</ol>}
+    {run.state === 'accepted' && <GitHubExport key={run.id} run={run} />}
     <div className="human-review"><Info size={18} /><div><strong>Keep a human in the review.</strong><p>{run.humanChecks[0]} Automated checks do not establish complete WCAG conformance.</p></div></div>
     <div className="fingerprints"><span>Run <code>{run.id.slice(0, 8)}</code></span><span>Protected checks <code title={run.contractHash}>{run.contractHash.slice(0, 12)}</code></span><span>Source <code title={run.sourceHash}>{run.sourceHash.slice(0, 12)}</code></span></div>
   </section>;

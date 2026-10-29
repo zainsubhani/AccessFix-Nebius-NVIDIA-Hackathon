@@ -27,3 +27,5 @@ export interface Run {
 }
 export interface Config { providerConfigured: boolean; model: string; fixtures: Fixture[]; maxAttempts: number; activeRunId?: string; hostedDemo?: boolean; ephemeralStorage?: boolean; repairAvailable?: boolean; repairUnavailableReason?: string; modelRequestsRemaining?: number; }
 export interface SignupPayload { email: string; password: string; terms: boolean; }
+export interface GitHubPreview { id: string; repository: string; base: string; baseSha: string; path: string; branch: string; title: string; patch: string; }
+export interface GitHubExport { url: string; number: number; draft: boolean; state: string; }

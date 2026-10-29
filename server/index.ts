@@ -1,4 +1,6 @@
 import express from 'express';
+import { randomUUID } from 'node:crypto';
+import { acceptedSource, createDraft, exportStore, ExportError, githubApi, githubConfig, previewExport, type PreviewRecord } from './github-export.js';
 import path from 'node:path';
 import { existsSync } from 'node:fs';
 import { ACTIVE_STATES, type RunMode } from '../shared/types.js';
@@ -116,6 +118,43 @@ app.get('/api/runs/:id/patch', (req, res) => {
   const run = readRun(req.params.id); const attempt = run?.attempts.find(item => item.accepted);
   if (run?.state !== 'accepted' || !attempt) { res.status(409).json({ error: 'No accepted patch is available for this run.' }); return; }
   res.attachment(`accessfix-${run.id.slice(0, 8)}.patch`).type('text/plain').send(attempt.patch);
+});
+const exportPreviews = new Map<string, PreviewRecord>();
+const activeExports = new Set<string>();
+app.get('/api/github', (_req, res) => {
+  const config = githubConfig();
+  res.json({ enabled: config.enabled, repository: deployment.hosted ? '' : config.repository });
+});
+app.post('/api/runs/:id/github/preview', async (req, res, next) => {
+  try {
+    const config = githubConfig();
+    if (!config.enabled) throw new ExportError('GitHub export is disabled in this workspace. Configure it on your local developer machine.', 403);
+    const run = readRun(req.params.id);
+    if (!run) throw new ExportError('Run not found.', 404);
+    acceptedSource(run);
+    const saved = exportStore(run.id).read();
+    if (saved && (saved.preview.repository !== config.repository || saved.preview.path !== req.body?.path)) throw new ExportError('This run already has an export for a different destination.');
+    const preview = saved ? { ...saved.preview, id: randomUUID(), createdAt: Date.now() } : await previewExport(run, req.body?.path, config, await githubApi());
+    for (const [id, item] of exportPreviews) if (Date.now() - item.createdAt > 15 * 60_000) exportPreviews.delete(id);
+    if (exportPreviews.size >= 100) exportPreviews.delete(exportPreviews.keys().next().value!);
+    exportPreviews.set(preview.id, preview);
+    const { runId, sourceHash, candidateHash, fileSha, createdAt, ...publicPreview } = preview;
+    res.json(publicPreview);
+  } catch (error) { if (error instanceof ExportError) res.status(error.status).json({ error: error.message }); else next(error); }
+});
+app.post('/api/runs/:id/github', async (req, res, next) => {
+  const id = req.params.id;
+  if (activeExports.has(id)) { res.status(409).json({ error: 'An export is already in progress for this run.' }); return; }
+  activeExports.add(id);
+  try {
+    const run = readRun(id); const preview = exportPreviews.get(req.body?.previewId);
+    if (!run) throw new ExportError('Run not found.', 404);
+    if (!preview || preview.runId !== id || Date.now() - preview.createdAt > 15 * 60_000) throw new ExportError('The export preview expired. Review a fresh preview.');
+    const config = githubConfig();
+    if (!config.enabled) throw new ExportError('GitHub export is disabled in this workspace.', 403);
+    res.json(await createDraft(run, preview, config, await githubApi(), exportStore(id)));
+  } catch (error) { if (error instanceof ExportError) res.status(error.status).json({ error: error.message }); else next(error); }
+  finally { activeExports.delete(id); }
 });
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Endpoint not found.' }));
 const dist = path.join(ROOT, 'dist');

@@ -123,3 +123,7 @@ The checks cover four explicitly defined component contracts. They do not establ
 ## License
 
 [MIT](LICENSE). Model and hosted-provider usage remain subject to their respective terms.
+
+## GitHub review workflow
+
+An accepted component can be exported from the local workspace as a draft PR after reviewing its destination and diff. AccessFix checks that the GitHub file exactly matches the audited baseline and changes only that file. Shared judge demos disable repository writes. See [GitHub export](docs/github-export.md) for authentication, supported paths and retry recovery.
