@@ -7,12 +7,14 @@ Evaluation snapshot: **29 October 2026**. These results concern the included sta
 | Check | Recorded result |
 |---|---|
 | `npm run build` | TypeScript checking and production frontend build passed |
-| `npm test` | 20 engine and repair-context tests passed; browser cases use real Chromium |
+| `npm test` | 23 engine, repair-context and hosted-deployment tests passed; browser cases use real Chromium |
 | `npm run test:ui` | 2 UI tests passed across multiple workflows |
 | Dashboard accessibility | No selected axe WCAG rule violations in tested states; intentionally broken fixture iframe excluded |
 | Responsive layout | Tested at 1536, 1280, 390 and 320 CSS pixels |
 
 Engine and repair-context tests cover baseline failures, known-good acceptance, consent-regression rejection, a second component implementation, bounded retries, unchanged original source, provider failure, cancellation, prohibited imports, tool-call validation, HTML escaping, readable provider context and advisory diagnostics. Prepared stale-focus and invalid-TypeScript candidates are rejected and their failures reach the retry; prepared corrected candidates then pass. A one-attempt budget stops without another proposal. These tests verify orchestration, not autonomous generation.
+
+Hosted-deployment tests cover fail-closed configuration, password authentication, exact-origin enforcement, protected reports and images, persisted run/model reservations, recorded-evidence restoration and a real audit after startup. The free configuration rejects nonzero inference budgets.
 
 UI tests cover source inspection, audit results, prepared-candidate verification, diffs, report download, image loading, saved history, reload restoration, keyboard navigation, responsive layout and API failure recovery. Automated tests do not call Nebius. Injected test candidates and the verification lab must not be reported as autonomous AI repairs.
 
@@ -62,7 +64,7 @@ This is one successful autonomous repair of the included signup fixture. It does
 
 Each local run saves source/check-suite SHA-256 fingerprints, events, candidate diffs, checks, usage and screenshots. The CLI also writes a portable HTML report and, when accepted, a patch. The dashboard generates its downloadable report from the saved run.
 
-Artifacts live in `.accessfix/runs/` and are excluded from version control because they can contain supplied source. Generate new evidence with the commands in the [README](../README.md). Live repair requires a valid provider key, model access and credits; results may vary.
+Local artifacts live in `.accessfix/runs/` and are excluded from version control because they can contain supplied source. One curated copy of the latest accepted run, using only the public signup fixture, is included under `demo/verified-signup/` for hosted playback. It retains the original timestamps, verification fingerprint and usage; the hosted UI and report label it as a recording. New free-hosted runs use longer browser readiness waits to accommodate shared CPU throttling, recorded as the `free-demo` execution profile. The historical AI run used local timings. Generate new evidence with the commands in the [README](../README.md). Live repair requires a valid provider key, model access and credits; results may vary.
 
 ## Limits
 

@@ -10,7 +10,7 @@ Built for the [Nebius × NVIDIA Global AI Hackathon](https://nebiusglobalaihacka
 
 ## Project status
 
-This release is an experimental local MVP. Auditing, candidate verification, regression rejection, history and report export are implemented. The latest live NVIDIA/Nebius repair improved the included signup from **6/10 to 10/10 browser checks and passed strict TypeScript checking**, with one model request. Earlier trials exposed focus, validation and typing defects; one successful fixture run does not establish general repair reliability. Prepared verification exercises are labeled separately and do not call a model. See the full [verification results](docs/verification.md).
+This release is an experimental MVP with a local developer workflow and a restricted hosted judge demo. Auditing, candidate verification, regression rejection, history and report export are implemented. The latest live NVIDIA/Nebius repair improved the included signup from **6/10 to 10/10 browser checks and passed strict TypeScript checking**, with one model request. Earlier trials exposed focus, validation and typing defects; one successful fixture run does not establish general repair reliability. Prepared verification exercises are labeled separately and do not call a model. See the full [verification results](docs/verification.md).
 
 The current scope is a documented signup-component contract, not arbitrary repositories or full-application accessibility certification.
 
@@ -95,7 +95,7 @@ With the development server running in another terminal:
 npm run test:ui
 ```
 
-The automated suites use known or injected candidates and make no live inference calls. GitHub Actions builds the project and runs the engine and UI suites without a provider key. See [contributing](CONTRIBUTING.md) for the development workflow.
+The automated suites use known or injected candidates and make no live inference calls. GitHub Actions builds the project, runs the engine and UI suites, and exercises the deployment container with 512 MB RAM and 0.1 CPU without a provider key. See [contributing](CONTRIBUTING.md) for the development workflow.
 
 ## Documentation
 
@@ -104,12 +104,12 @@ The automated suites use known or injected candidates and make no live inference
 | [Architecture](docs/architecture.md) | Components, repair loop, artifacts and trust boundaries |
 | [Component contract](docs/component-contract.md) | Supported inputs and protected checks |
 | [Verification](docs/verification.md) | Automated coverage and observed live-model limitations |
-| [Deployment](docs/deployment.md) | Local production preview and requirements for public hosting |
+| [Deployment](docs/deployment.md) | Free Render judge demo, configuration and local production preview |
 | [Demo walkthrough](docs/demo-script.md) | A reproducible demonstration using real outcomes |
 
 ## Scope and deployment
 
-The server binds to loopback. Public hosting requires access controls, request budgets, an isolated execution environment and controlled artifact access. There is no public deployment in this release. Run artifacts may contain source code and remain in the ignored `.accessfix/` directory.
+Local mode binds to loopback. The included Render Free Blueprint runs a password-protected judge demo with fixed public fixtures, shared run limits and authenticated artifacts. It restores the recorded real AI repair at startup; fresh audits and the verification lab run without inference. New paid repair requests are disabled on this ephemeral deployment. See the [deployment guide](docs/deployment.md) for cold-start and storage limits. Local CLI artifacts may contain private source and remain in the ignored `.accessfix/` directory.
 
 The checks cover one defined signup journey. They do not establish complete WCAG conformance, real screen-reader behavior, backend correctness or general repair accuracy.
 

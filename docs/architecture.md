@@ -7,7 +7,7 @@ AccessFix separates model proposals from acceptance. The model supplies one comp
 | Layer | Implementation | Responsibility |
 |---|---|---|
 | Workbench | React, TypeScript, Vite | Fixture selection, source inspection, progress, evidence, history and downloads |
-| Local API | Express | Configuration status, one active dashboard run, cancellation and artifacts |
+| API | Express | Configuration status, one active dashboard run, cancellation, artifacts and hosted demo authentication |
 | Runner | `server/runner.ts` | Baseline audit, bounded proposal/verification loop, terminal states and persistence |
 | Provider adapter | `server/provider.ts` | Server-side Nebius authentication, NVIDIA model request and strict tool-call parsing |
 | Repair context | `server/repair-context.ts` | Readable source context and advisory diagnostics for rejected candidates |
@@ -23,7 +23,7 @@ AccessFix separates model proposals from acceptance. The model supplies one comp
 5. Require strict TypeScript checking before bundling the proposed component, then replay the same browser checks. Accept only when compilation succeeds, all checks pass, no axe violations remain, and no previously passing check regresses. Type errors are returned as execution feedback for a bounded retry.
 6. If necessary, request one further proposal using actual failed-check feedback. Persist the final accepted, rejected, unresolved, error or cancelled state.
 
-There are at most two model requests per repair run, a 120-second provider-request timeout and a 60-second limit for each component inspection. The CLI can lower the request cap to one with `--max-attempts 1`. The original file is never overwritten. An accepted diff is an output for human review.
+There are at most two model requests per repair run, a 120-second provider-request timeout and a 60-second limit for each local component inspection (180 seconds in the resource-constrained free hosted demo). The CLI can lower the request cap to one with `--max-attempts 1`. The original file is never overwritten. An accepted diff is an output for human review.
 
 The provider receives original and previous-candidate source as separate plain-text sections, with structured browser observations alongside them. Source is not nested inside a second JSON string. Retry feedback preserves failed checks, regressions and execution errors. Advisory TypeScript syntax analysis also highlights changed regular-expression literals and, after a focus-check failure, unattached refs or focus decisions that read React error state. These observations are heuristics, not proof of a defect; they neither edit source nor alter acceptance. Candidate diagnostics are saved in the run JSON.
 
@@ -39,10 +39,12 @@ New run fingerprints cover both `server/checks.ts` and `server/fixture-host.ts`,
 
 The API key is read only by the backend from the process environment or local `.env`. The browser receives configuration status, never the key. Live repair sends source, findings and retry context to the configured HTTPS Nebius endpoint. The adapter permits only Nebius hostnames and NVIDIA model identifiers.
 
-Local JSON records, PNG captures and CLI exports are stored under `.accessfix/runs/<id>/`. Records may contain complete component source. Dashboard reports embed images for offline review. No database, remote artifact store or shared-account authorization is included.
+Local JSON records, PNG captures and CLI exports are stored under `.accessfix/runs/<id>/`. Records may contain complete component source. Dashboard reports embed images for offline review. There is no database or remote artifact store. Hosted mode uses a configurable data directory and shared judge credentials for all UI, API and artifact access. It restores one curated public-fixture recording from `demo/verified-signup`; other local run history is never included in the image.
 
 Dashboard concurrency is limited to one active run per API process. Separate CLI processes are not coordinated by a shared queue. Startup recovery marks interrupted records as errors; avoid restarting the API while a separate CLI run is active in the same data directory.
 
 ## Deployment scope
 
-The application runs on a local CPU host; Token Factory provides hosted model inference. The API and fixture servers bind to loopback. See [deployment](deployment.md) for the changes required before serving a public demo and [verification](verification.md) for measured behavior and limitations.
+The application runs on a CPU host; Token Factory provides hosted model inference. Local mode and internal fixture servers bind to loopback. Hosted mode requires strong shared credentials, an exact HTTPS origin and an explicit data directory before exposing the API. It limits run starts, retains recent artifacts and reserves any configured model budget before execution. One hosted repair can use at most one model request.
+
+The Render Free Blueprint declares ephemeral storage, caps model requests at zero and restores the labeled recorded AI repair after restarts. Fresh audits and prepared-candidate checks still execute Chromium. Enabling inference with ephemeral accounting is rejected at startup. See [deployment](deployment.md) for configuration and [verification](verification.md) for measured behavior and limitations.

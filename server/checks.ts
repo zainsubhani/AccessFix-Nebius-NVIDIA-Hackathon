@@ -3,7 +3,7 @@ import axe from 'axe-core';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { compileFixture, startFixture } from './fixture-host.js';
-import type { Check, Evidence, Violation } from '../shared/types.js';
+import type { Check, Evidence, ExecutionProfile, Violation } from '../shared/types.js';
 
 const EMAIL = 'keyboard.user@example.com';
 const PASSWORD = 'good-password-42';
@@ -29,7 +29,7 @@ function briefError(error: unknown) {
 }
 
 // These checks are outside every model-writeable file. Both versions use this exact function.
-export async function inspectComponent(source: string, outputDir: string, prefix: string, signal?: AbortSignal): Promise<Evidence> {
+export async function inspectComponent(source: string, outputDir: string, prefix: string, signal?: AbortSignal, profile: ExecutionProfile = 'local'): Promise<Evidence> {
   signal?.throwIfAborted();
   const started = Date.now();
   const html = await compileFixture(source);
@@ -43,8 +43,9 @@ export async function inspectComponent(source: string, outputDir: string, prefix
     const context = await browser.newContext({ viewport: { width: 760, height: 570 }, reducedMotion: 'reduce', serviceWorkers: 'block' });
     await context.route('**/*', route => route.request().url() === host.url ? route.continue() : route.abort());
     const page = await context.newPage();
-    page.setDefaultTimeout(1500);
-    page.setDefaultNavigationTimeout(5000);
+    // Slow shared CPUs need longer readiness waits; both versions use the same profile and checks.
+    page.setDefaultTimeout(profile === 'free-demo' ? 10_000 : 1500);
+    page.setDefaultNavigationTimeout(profile === 'free-demo' ? 30_000 : 5000);
     const consoleErrors: string[] = [];
     page.on('pageerror', error => { if (consoleErrors.length < 5) consoleErrors.push(briefError(error)); });
     const reset = async () => { signal?.throwIfAborted(); await page.goto(host.url); await page.getByTestId('email').waitFor(); };

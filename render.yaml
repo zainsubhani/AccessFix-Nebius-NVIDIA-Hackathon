@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: accessfix-nebius-nvidia-demo
+    runtime: docker
+    plan: free
+    region: frankfurt
+    numInstances: 1
+    autoDeployTrigger: off
+    healthCheckPath: /api/health
+    envVars:
+      - key: ACCESSFIX_MODE
+        value: hosted
+      - key: ACCESSFIX_DEMO_USER
+        value: judge
+      - key: ACCESSFIX_DEMO_PASSWORD
+        generateValue: true
+      - key: ACCESSFIX_MODEL_REQUEST_LIMIT
+        value: "0"
+      - key: ACCESSFIX_EPHEMERAL
+        value: "true"
+      - key: ACCESSFIX_RUNS_PER_HOUR
+        value: "20"
+      - key: NEBIUS_BASE_URL
+        value: https://api.tokenfactory.nebius.com/v1
+      - key: NEBIUS_MODEL
+        value: nvidia/nemotron-3-super-120b-a12b

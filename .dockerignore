@@ -1,0 +1,17 @@
+node_modules
+dist
+.git
+.env
+.env.*
+.accessfix
+.codex
+.agents
+docs/internal
+docs/hackathon-*.md
+docs/product-direction-*.md
+DESIGN.md
+UX-CONTRACT.md
+premium-ui.json
+*.log
+test-results
+playwright-report
