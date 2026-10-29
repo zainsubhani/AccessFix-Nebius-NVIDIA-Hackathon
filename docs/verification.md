@@ -11,6 +11,9 @@ Evaluation snapshot: **29 October 2026**. These results concern the included sta
 | `npm run test:ui` | 2 UI tests passed across multiple workflows |
 | Dashboard accessibility | No selected axe WCAG rule violations in tested states; intentionally broken fixture iframe excluded |
 | Responsive layout | Tested at 1536, 1280, 390 and 320 CSS pixels |
+| Free-tier container | Linux CI passed at 512 MB RAM and 0.1 CPU: authenticated evidence, fixture preview, clean audit and browser-confirmed consent-regression rejection |
+
+In the successful constrained-container run, the clean audit took 68.502 seconds and the two-component regression exercise took 130.685 seconds. Reported memory use after completion was 230.9 MiB of 512 MiB; this is not a peak measurement. A fresh signup audit on Render Free completed in 63.304 seconds with the expected 6/10 baseline result and zero model requests. These are individual observations, not latency guarantees.
 
 Engine and repair-context tests cover baseline failures, known-good acceptance, consent-regression rejection, a second component implementation, bounded retries, unchanged original source, provider failure, cancellation, prohibited imports, tool-call validation, HTML escaping, readable provider context and advisory diagnostics. Prepared stale-focus and invalid-TypeScript candidates are rejected and their failures reach the retry; prepared corrected candidates then pass. A one-attempt budget stops without another proposal. These tests verify orchestration, not autonomous generation.
 

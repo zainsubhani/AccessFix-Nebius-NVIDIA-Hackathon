@@ -79,8 +79,11 @@ app.post('/api/runs', (req, res) => {
   }
   const run = createRun(fixture, mode as RunMode);
   const controller = new AbortController(); active.set(run.id, controller);
-  void executeRun(run, controller.signal, undefined, { maxAttempts: deployment.maxAttempts, executionProfile: deployment.executionProfile }).finally(() => active.delete(run.id));
   res.status(202).json(run);
+  // Flush the accepted response before TypeScript compilation can occupy the shared CPU.
+  setImmediate(() => {
+    void executeRun(run, controller.signal, undefined, { maxAttempts: deployment.maxAttempts, executionProfile: deployment.executionProfile }).finally(() => active.delete(run.id));
+  });
 });
 app.post('/api/runs/:id/cancel', (req, res) => {
   const controller = active.get(req.params.id);

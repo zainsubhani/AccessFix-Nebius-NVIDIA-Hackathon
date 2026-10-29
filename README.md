@@ -14,6 +14,8 @@ This release is an experimental MVP with a local developer workflow and a restri
 
 The current scope is a documented signup-component contract, not arbitrary repositories or full-application accessibility certification.
 
+The [hosted judge demo](https://accessfix-nebius-nvidia-demo.onrender.com) runs on Render Free. Judge credentials are shared privately. It supports fresh audits, the verification lab and recorded NVIDIA/Nebius repair evidence; new paid inference is disabled. Allow time for a cold start and download reports you need to keep. See the [deployment limits](docs/deployment.md).
+
 ## Quick start
 
 Install **Node.js 22+** and npm, then run:

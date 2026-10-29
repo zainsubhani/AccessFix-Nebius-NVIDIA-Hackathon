@@ -102,6 +102,11 @@ test('keyboard navigation, missing-key status and API failure recovery are expli
     await page.route('**/api/config', route => route.abort());
     await page.getByRole('alert').filter({ hasText: 'The runner is unavailable.' }).waitFor({ timeout: 10000 });
     assert.ok(await page.getByRole('link', { name: 'Export report', exact: true }).isVisible());
+    await page.getByRole('button', { name: 'Run audit', exact: true }).click();
+    await page.getByRole('link', { name: 'Export report', exact: true }).waitFor({ state: 'hidden' });
+    await page.getByRole('link', { name: 'Export report', exact: true }).waitFor({ timeout: 30000 });
+    assert.match(await page.locator('.result-summary').innerText(), /No patch is needed/);
+    assert.ok((await page.getByRole('alert').allTextContents()).every(text => /runner is unavailable|Could not refresh/.test(text)), 'A refresh failure must not turn an accepted run into a start error.');
     await page.unroute('**/api/config');
     await page.getByRole('alert').filter({ hasText: 'The runner is unavailable.' }).waitFor({ state: 'hidden', timeout: 10000 });
   } finally { await browser.close(); }

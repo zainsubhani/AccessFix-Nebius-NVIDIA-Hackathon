@@ -98,6 +98,7 @@ test('hosted HTTP protects evidence, enforces exact origins, runs a real audit a
     const started = await request('/api/runs', 'POST', { fixture: 'healthy', mode: 'audit' });
     assert.equal(started.status, 202);
     const run = await started.json();
+    assert.equal(run.state, 'queued', 'The acceptance response must precede browser execution.');
     assert.equal((await request('/api/runs', 'POST', { fixture: 'healthy', mode: 'audit' })).status, 409);
     let finished;
     for (let attempt = 0; attempt < 60; attempt++) {
