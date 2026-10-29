@@ -23,6 +23,11 @@ try {
     await wait(500);
   }
   assert.equal((await fetch(base + '/api/runs')).status, 401);
+  const home = await request('/');
+  assert.equal(home.status, 200);
+  assert.match(await home.text(), /FirstStep · Engineering practice lab/);
+  assert.deepEqual(await (await request('/api/firststep/config')).json(), { enabled: false, remaining: 0 });
+  assert.equal((await request('/api/firststep/coach', { mission: 'checkout', question: 'Help' })).status, 403);
   const config = await (await request('/api/config')).json();
   assert.equal(config.ephemeralStorage, true);
   assert.equal(config.repairAvailable, false);

@@ -1,5 +1,15 @@
 # Deployment
 
+## FirstStep release
+
+FirstStep is the primary app at `/`; `/firststep` is an alias. The companion AccessFix workbench is at `/accessfix`. Both share the existing Node service and authentication. Keep the Render service identity `accessfix-nebius-nvidia-demo` to update the existing free service rather than create another resource.
+
+After merging a verified release, use **Manual Deploy → Deploy latest commit** on that Render service. Confirm its GitHub source is `zainsubhani/FirstStep-Nebius-NVIDIA-Hackathon` on `main`. Check the root page title and run **Reproduce incident**: the baseline must pass seven of nine checks. `/api/firststep/config` must return `enabled: false` and `remaining: 0`. Keep automatic deploys off until review and CI are complete.
+
+FirstStep decisions execute in the learner's browser and do not use server Chromium. Drafts are browser-tab data. Coaching stays disabled on this host, even if local opt-in variables are present. Hosted practice alone does not demonstrate NVIDIA/Nebius runtime use.
+
+## Companion workbench infrastructure
+
 AccessFix supports a local developer workflow and a password-protected, fixed-fixture judge demo. The included Render Blueprint selects **Free**, creates no persistent disk and disables new model requests. It is a demonstration environment, not a production service for customer repositories.
 
 ## Render Free judge demo

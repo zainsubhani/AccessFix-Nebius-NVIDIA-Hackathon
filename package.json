@@ -1,9 +1,9 @@
 {
-  "name": "accessfix",
+  "name": "firststep",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Reproduce accessibility barriers, propose React patches, and verify the same journey.",
+  "description": "Investigate software incidents, verify fixes, and practice engineering judgment.",
   "scripts": {
     "dev": "concurrently -k -n api,web \"tsx watch server/index.ts\" \"vite --host 127.0.0.1\"",
     "build": "tsc --noEmit && vite build",

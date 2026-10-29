@@ -1,5 +1,6 @@
 services:
   - type: web
+    # Keep the existing free service identity; FirstStep is served at /.
     name: accessfix-nebius-nvidia-demo
     runtime: docker
     plan: free
@@ -8,6 +9,10 @@ services:
     autoDeployTrigger: off
     healthCheckPath: /api/health
     envVars:
+      - key: FIRSTSTEP_LIVE_COACHING
+        value: "false"
+      - key: FIRSTSTEP_COACH_REQUEST_LIMIT
+        value: "0"
       - key: ACCESSFIX_MODE
         value: hosted
       - key: ACCESSFIX_DEMO_USER

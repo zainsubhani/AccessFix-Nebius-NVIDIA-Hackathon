@@ -10,9 +10,12 @@ import { compileFixture } from './fixture-host.js';
 import { reportHtml } from './report.js';
 import { deploymentConfig, demoAuthentication, DemoBudget } from './deployment.js';
 import { prepareHostedEvidence, pruneHostedRuns } from './hosted-evidence.js';
+import { CoachingError, createFirstStepCoach } from './firststep-coach.js';
 
 const deployment = deploymentConfig();
 const budget = new DemoBudget(deployment);
+// Both switches must be set explicitly in the server environment. Existing keys do not opt in.
+const firstStepCoach = createFirstStepCoach({ enabled: !deployment.hosted && process.env.FIRSTSTEP_LIVE_COACHING === 'true', limit: Number(process.env.FIRSTSTEP_COACH_REQUEST_LIMIT || 0) });
 const app = express();
 app.disable('x-powered-by');
 app.use((req, res, next) => {
@@ -45,6 +48,11 @@ const hostedPreviews = new Map<string, Promise<string>>();
 recoverInterruptedRuns();
 if (deployment.hosted) { prepareHostedEvidence(); pruneHostedRuns(); }
 app.get('/api/health', (_req, res) => res.json({ ok: true, service: 'accessfix' }));
+app.get('/api/firststep/config', (_req, res) => res.json(firstStepCoach.status()));
+app.post('/api/firststep/coach', async (req, res) => {
+  try { res.json(await firstStepCoach.ask(req.body)); }
+  catch (error) { res.status(error instanceof CoachingError ? error.status : 500).json({ error: error instanceof CoachingError ? error.message : 'Coaching is unavailable. Your draft is unchanged.' }); }
+});
 app.get('/api/config', (_req, res) => {
   try {
     const config = providerConfig();

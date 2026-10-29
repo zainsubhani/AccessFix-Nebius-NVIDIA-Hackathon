@@ -1,28 +1,21 @@
-# AccessFix demo — under three minutes
+# FirstStep demonstration
 
-Show the working app and actual results. The presentation covers signup, login, confirmation dialog and navigation contracts; the demonstrated AI repair remains the one real recorded signup run. New contract candidates are clearly labeled prepared exercises. Inference is disabled for recording and on both judge deployments.
+Target length: 2–3 minutes. Record the running app with readable English narration or captions. The current demonstration uses authored scenarios and prepared code edits; it makes no model calls and does not establish learning gains.
 
-The recorded run `20059716-75ab-457d-a685-28d0d9671158` is an NVIDIA/Nebius candidate that passed strict TypeScript and all ten browser checks. Its original 10.472-second duration, one model request and 3,071 reported tokens are preserved. The earlier browser-only candidate that failed TypeScript is not valid repair evidence.
-
-## Suggested sequence
-
-| Segment | Show | Explain |
+| Time | Show | Explain |
 |---|---|---|
-| Problem | Signup preview; Tab through controls | A complete-looking form can block a keyboard user. |
-| Reproduction | Fresh audit and expanded findings | Six of ten baseline checks pass; the other checks expose barriers. |
-| Real AI evidence | History → Recorded live AI repair; events and diff | NVIDIA Nemotron on Nebius Token Factory proposed this bounded patch. Viewing it now makes no model request. |
-| Verification | Candidate checks and source diff | Strict TypeScript and the unchanged browser checks accepted the candidate at ten of ten. |
-| Keyboard replay | Verification lab → Replay recorded repair → Keyboard replay | Fresh checks re-verify the unedited recorded candidate. Captured frames show observed focus before and after. |
-| Regression rejection | Test a regression | The prepared candidate removes required consent and is rejected despite other improvements. |
-| Broader contracts | Login, navigation and dialog fixtures; good dialog exercise | Each contract protects its own behavior. Prepared examples are not evidence of AI repair accuracy. |
-| Developer review | Report download and local GitHub draft preview | The preview matches the GitHub file to the audited source. Creating a draft requires an explicit action and never merges it. |
-| Judge access | Authenticated Mac-worker interface | Fresh browser checks run on the private Mac worker; inference and GitHub writes remain disabled. Render is the fallback. |
-| Scope | Human-review notes and project links | One recorded AI success is not a general success rate. Screen-reader testing and real-user feedback remain necessary. |
+| 0:00–0:15 | Incident workspace | FirstStep lets a junior developer practice investigation and protect existing behavior when fixing software. |
+| 0:15–0:35 | Place test order; rejection | A full-discount order fails in this authored, simulated checkout. |
+| 0:35–0:55 | Customer steps, events and product note | Zero is valid. Free orders should confirm without a card; invalid input must still fail. |
+| 0:55–1:10 | Reproduce incident; seven of nine | Establish the baseline by executing the original code. |
+| 1:10–1:30 | Prepared overbroad fix | A change that confirms everything fails regression checks. |
+| 1:30–1:50 | Correct fix; nine of nine; confirmed order | Preserve validation, handle zero separately and require payment for positive amounts. |
+| 1:50–2:10 | Handoff and reservation task | Explain the change, then apply the concept where eligibility is a separate requirement. |
+| 2:10–2:25 | Evidence download | Export code, results and observations; this is a practice record, not a hiring credential. |
+| 2:25–2:45 | Guidance label | NVIDIA Nemotron coaching through Nebius Token Factory is implemented but disabled and not live-validated. Current hints are authored. |
 
 ## Recording and submission
 
-Use English narration or English translations and readable captions. Keep the final video below three minutes. Log in before recording and exclude credentials, API keys and unrelated windows. If a wait is shortened, label it. A GitHub preview must not be presented as an already-created PR.
+Use actual check outcomes and label prepared fixes or shortened waits. Exclude credentials, `.env` and private source. Do not present AccessFix's recorded model output as FirstStep inference. Do not imply task completion proves learning or employment readiness.
 
-Open the Render service early to allow its free-instance cold start. For faster fresh browser evidence, use the [private Mac worker](judge-worker.md) while its tunnel and Mac are running. The temporary worker cannot guarantee availability throughout judging.
-
-Keep the full run artifacts for judges. Do not invent customers, time savings, cost, broad accuracy or a deployed pilot. A public video URL and the project submission still need to be supplied through the hackathon's required channels; local video generation does not publish or submit an entry.
+A local MP4 is not a public submission. The event requires a public YouTube link. Before final submission, validate the required NVIDIA/Nebius integration and update the video with real runtime evidence. Keep the disabled-mode disclosure until demonstrated behavior changes. See the [submission brief](submission.md).
