@@ -26,7 +26,7 @@ try {
   const config = await (await request('/api/config')).json();
   assert.equal(config.ephemeralStorage, true);
   assert.equal(config.repairAvailable, false);
-  const processInfo = docker('top', name, '-eo', 'uid,args');
+  const processInfo = docker('top', name, '-eo', 'pid,uid,args');
   assert.match(processInfo, /1000\s+node --import tsx server\/index.ts/);
   assert.equal(docker('exec', name, 'sh', '-c', 'test ! -f /app/.env && test ! -d /app/.accessfix && echo clean'), 'clean');
   const history = await (await request('/api/runs')).json();
