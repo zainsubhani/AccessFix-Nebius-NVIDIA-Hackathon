@@ -1,16 +1,16 @@
-# FirstStep
+# PatchTrek
 
 **Investigate the incident. Verify the fix. Explain the decision.**
 
-FirstStep is a developer practice lab for learners who know basic JavaScript and want to investigate unfamiliar software. Work from a simulated customer ticket, reproduction steps and logs; edit a small decision function; execute regression checks; then try another scenario.
+PatchTrek (formerly FirstStep) is a developer practice lab for learners who know basic JavaScript and want to investigate unfamiliar software. Work from a simulated customer ticket, reproduction steps and logs; edit a small decision function; execute regression checks; then try another scenario.
 
 Built for the [Nebius × NVIDIA Global AI Hackathon](https://nebiusglobalaihackathon.devpost.com/). Intended track: **Best Apps and Agents**.
 
 ## Quick start
 
 ```sh
-git clone https://github.com/zainsubhani/FirstStep-Nebius-NVIDIA-Hackathon.git
-cd FirstStep-Nebius-NVIDIA-Hackathon
+git clone https://github.com/zainsubhani/PatchTrek-Nebius-NVIDIA-Hackathon.git
+cd PatchTrek-Nebius-NVIDIA-Hackathon
 npm ci
 npm run dev
 ```
@@ -27,7 +27,11 @@ The existing [Render judge service](https://accessfix-nebius-nvidia-demo.onrende
 4. **Verify:** run nine behavioral checks. Overbroad fixes fail regression cases.
 5. **Explain:** record the cause, fix, risks and assistance in a reviewer handoff.
 6. **Transfer:** try complimentary workshop reservations, where eligibility remains mandatory even when the fee is zero.
-7. **Keep evidence:** export drafts, observations, results and recorded assistance as JSON.
+7. **Explore edge cases:** write up to eight JSON inputs and expected decisions; run them in the same browser sandbox, separately from authored grading.
+8. **Compare attempts:** inspect the last ten completed runs, identify newly passing checks and regressions, and restore a previous draft for fresh verification.
+9. **Keep evidence:** export complete records as JSON or a readable Markdown engineering report with reasoning, execution results and recorded assistance.
+
+The app now uses the PatchTrek name. Existing repository links, `/firststep` routes, API paths, storage keys and environment variables remain compatible. Recorded runtime evidence and the existing video document the earlier FirstStep release.
 
 Drafts are saved in this browser tab for up to 24 hours. Reload restores work but requires fresh checks; stale results cannot unlock the next mission.
 
@@ -35,7 +39,7 @@ Drafts are saved in this browser tab for up to 24 hours. Reload restores work bu
 
 An optional server adapter calls an NVIDIA Nemotron model through **Nebius Token Factory** for a focused debugging hint. It sends only the learner's question and public scenario facts, not learner source. The coach does not execute code or determine passing grades.
 
-**Real FirstStep inference was verified on 29 October 2026** with `nvidia/nemotron-3-super-120b-a12b`: a debugging question received an HTTP 200 response in 1.58 seconds, using 406 input and 179 output tokens. See the [runtime evidence](docs/evidence/firststep-runtime.json). A second request through the deployed judge app also returned HTTP 200; see the [hosted runtime evidence](docs/evidence/firststep-hosted-runtime.json). Automated tests use fake responses, separate from these two live requests.
+**Real inference for the FirstStep release (now PatchTrek) was verified on 29 October 2026** with `nvidia/nemotron-3-super-120b-a12b`: a debugging question received an HTTP 200 response in 1.58 seconds, using 406 input and 179 output tokens. See the [runtime evidence](docs/evidence/firststep-runtime.json). A second request through the deployed judge app also returned HTTP 200; see the [hosted runtime evidence](docs/evidence/firststep-hosted-runtime.json). Automated tests use fake responses, separate from these two live requests.
 
 The [integration guide](docs/firststep.md#nvidia-and-nebius-coaching) documents explicit opt-in and request limits. Keep keys in local `.env`, never frontend code or GitHub. Hosted coaching requires a durable Postgres budget ledger in addition to explicit opt-in. Key presence alone does not enable it. The companion repair budget remains disabled.
 
@@ -65,7 +69,7 @@ For a production preview, run `npm run build` then `npm start`, and open `http:/
 
 | Guide | Contents |
 |---|---|
-| [FirstStep](docs/firststep.md) | Missions, execution boundary, coaching setup and validation plan |
+| [PatchTrek](docs/firststep.md) | Missions, execution boundary, coaching setup and validation plan |
 | [Demo walkthrough](docs/demo-script.md) | Reproducible demonstration and narration |
 | [Submission brief](docs/submission.md) | Project description, judging fit and remaining requirements |
 | [Deployment](docs/deployment.md) | Free judge service and production preview |
@@ -73,7 +77,7 @@ For a production preview, run `npm run build` then `npm start`, and open `http:/
 
 ## Companion workbench
 
-The repository originated as AccessFix. Its accessibility repair workbench remains at `/accessfix`, with [separate documentation](docs/accessfix.md). Recorded AccessFix model output is **not FirstStep coaching evidence**. Internal `ACCESSFIX_*` configuration and `.accessfix/` artifact paths remain for compatibility.
+The repository originated as AccessFix. Its accessibility repair workbench remains at `/accessfix`, with [separate documentation](docs/accessfix.md). Recorded AccessFix model output is **not PatchTrek coaching evidence**. Internal `ACCESSFIX_*` configuration and `.accessfix/` artifact paths remain for compatibility.
 
 ## License
 

@@ -1,22 +1,22 @@
 # Deployment
 
-## FirstStep release
+## PatchTrek release
 
-FirstStep is the primary app at `/`; `/firststep` is an alias. The companion AccessFix workbench is at `/accessfix`. Both share the existing Node service and authentication. Keep the Render service identity `accessfix-nebius-nvidia-demo` to update the existing free service rather than create another resource.
+PatchTrek is the primary app at `/`; `/firststep` is an alias. The companion AccessFix workbench is at `/accessfix`. Both share the existing Node service and authentication. Keep the Render service identity `accessfix-nebius-nvidia-demo` to update the existing free service rather than create another resource.
 
-After merging a verified release, use **Manual Deploy → Deploy latest commit** on that Render service. Confirm its GitHub source is `zainsubhani/FirstStep-Nebius-NVIDIA-Hackathon` on `main`. Check the root page title and run **Reproduce incident**: the baseline must pass seven of nine checks. Without opt-in, `/api/firststep/config` must return `enabled: false` and `remaining: 0`. For the live judge release, verify `enabled: true` and a positive durable allowance. Keep automatic deploys off until review and CI are complete.
+After merging a verified release, use **Manual Deploy → Deploy latest commit** on that Render service. Confirm its GitHub source is `zainsubhani/PatchTrek-Nebius-NVIDIA-Hackathon` on `main`. Check the root page title and run **Reproduce incident**: the baseline must pass seven of nine checks. Without opt-in, `/api/firststep/config` must return `enabled: false` and `remaining: 0`. For the live judge release, verify `enabled: true` and a positive durable allowance. Keep automatic deploys off until review and CI are complete.
 
-FirstStep decisions execute in the learner's browser and do not use server Chromium. Drafts are browser-tab data. FirstStep coaching can run on this host with explicit opt-in and an external durable budget; the companion AccessFix repair remains disabled. See the live setup below.
+PatchTrek decisions execute in the learner's browser and do not use server Chromium. Drafts are browser-tab data. PatchTrek coaching can run on this host with explicit opt-in and an external durable budget; the companion AccessFix repair remains disabled. See the live setup below.
 
 The judge release at commit `e194aa8` was deployed on 30 October 2026 (Europe/Paris). A real hosted coaching request returned HTTP 200 and decremented the durable allowance from 99 to 98. See [runtime evidence](evidence/firststep-hosted-runtime.json). This is a point-in-time check; free hosting and provider availability must remain active throughout judging.
 
-## Live FirstStep coaching on Render Free
+## Live PatchTrek coaching on Render Free
 
 1. Provision a dedicated free Postgres database. Test `db/001-firststep-budget.sql` on an isolated branch, then apply it to the production database. The migration never resets an existing reservation counter.
 2. Add server secrets `NEBIUS_API_KEY` and `FIRSTSTEP_BUDGET_DATABASE_URL` to Render. Use a runtime database role with SELECT and UPDATE on only `reserved_cents` and `updated_at` in `firststep_coach_budget`; keep schema/owner credentials private.
 3. Set `FIRSTSTEP_LIVE_COACHING=true`. Keep `ACCESSFIX_MODEL_REQUEST_LIMIT=0` and `ACCESSFIX_EPHEMERAL=true`. Pin `NEBIUS_MODEL=nvidia/nemotron-3-super-120b-a12b`. The Blueprint defaults remain disabled so fresh deployments never opt into spending automatically.
 4. Deploy the reviewed commit. Check `/api/firststep/config`, then verify one explicitly budgeted question through **Ask coach**. Record the model and token metadata; do not retry automatically.
-5. Supply the shared demo credentials in Devpost's private testing instructions. Keep Render, Neon and provider credit available through the judging period ending 15 December 2026. A temporary Mac tunnel is not required for FirstStep coaching.
+5. Supply the shared demo credentials in Devpost's private testing instructions. Keep Render, Neon and provider credit available through the judging period ending 15 December 2026. A temporary Mac tunnel is not required for PatchTrek coaching.
 
 The durable ledger reserves five cents for each attempt, with a $5 total ceiling, fixed model and bounded prompt/output sizes. This is conservative request accounting at documented prices, not a provider-wide billing control. Database failure, missing setup, expiry or exhausted allowance stops new requests. The ledger contains no learner content. See [budget details and pricing assumptions](firststep.md#nvidia-and-nebius-coaching).
 
