@@ -43,14 +43,14 @@
   },
   "video": {
     "filename": "FirstStep-Hackathon-Demo.mp4",
-    "durationSeconds": 137,
+    "durationSeconds": 137.0,
     "width": 1920,
     "height": 1080,
     "videoCodec": "H.264",
     "audioCodec": "AAC",
     "captions": "English, embedded mov_text and separate SRT",
-    "sizeBytes": 10622200,
-    "sha256": "5fcc2ebf82f4bc5da232bbeef335c7036da5032b9dc790df2756d21c7d2d3b05",
+    "sizeBytes": 10250310,
+    "sha256": "e44b5b940790bf0807deaefa95ad65a40d33f742a116a51b799a706e8e869c34",
     "fullDecode": "passed",
     "publication": "Awaiting owner approval to upload to YouTube"
   },
