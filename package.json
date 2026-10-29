@@ -1,0 +1,40 @@
+{
+  "name": "accessfix",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Reproduce accessibility barriers, propose React patches, and verify the same journey.",
+  "scripts": {
+    "dev": "concurrently -k -n api,web \"tsx watch server/index.ts\" \"vite --host 127.0.0.1\"",
+    "build": "tsc --noEmit && vite build",
+    "start": "tsx server/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test --test-concurrency=1 tests/*.test.ts",
+    "test:ui": "tsx --test tests/ui/*.test.ts",
+    "accessfix": "tsx server/cli.ts",
+    "browsers": "playwright install chromium"
+  },
+  "dependencies": {
+    "@fontsource/manrope": "^5.2.6",
+    "axe-core": "^4.10.3",
+    "diff": "^8.0.2",
+    "dotenv": "^17.2.3",
+    "esbuild": "^0.25.11",
+    "express": "^5.1.0",
+    "lucide-react": "^0.468.0",
+    "playwright": "^1.56.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "typescript": "^5.9.3",
+    "tsx": "^4.20.6"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.5",
+    "@types/node": "^22.18.10",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^4.7.0",
+    "concurrently": "^9.2.1",
+    "vite": "^6.4.1"
+  }
+}
