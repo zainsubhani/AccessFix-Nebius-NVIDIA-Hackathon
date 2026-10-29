@@ -1,0 +1,26 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.accessfix/
+test-results/
+playwright-report/
+*.log
+.DS_Store
+
+# Local planning, design exploration, and working notes
+docs/internal/
+docs/hackathon-finalization.md
+docs/hackathon-research-*.md
+docs/product-direction-*.md
+DESIGN.md
+UX-CONTRACT.md
+premium-ui.json
+docs/design/accessfix-concept.png
+docs/design/fidelity-review.md
+docs/design/premium-audit.json
+
+# Editor and agent workspace metadata
+.codex/
+.agents/
