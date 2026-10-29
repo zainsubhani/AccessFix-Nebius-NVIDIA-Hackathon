@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ACTIVE_STATES, type Config, type Run, type RunMode } from '../../shared/types';
 
 export async function api<T>(url: string, init?: RequestInit): Promise<T> {
-  const timeout = AbortSignal.timeout(12_000);
+  const timeout = AbortSignal.timeout(60_000);
   const response = await fetch(url, { ...init, signal: init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout, headers: { 'Content-Type': 'application/json', ...init?.headers } });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || `Request failed (${response.status}).`);
@@ -63,7 +63,9 @@ export function useWorkbench() {
     mutation.current = true; setBusy(true); setError('');
     try {
       const next = await api<Run>('/api/runs', { method: 'POST', body: JSON.stringify({ fixture, mode }) });
-      setRun(next); setSelectedId(next.id); await refresh();
+      setRun(next); setSelectedId(next.id);
+      setConfig(current => current ? { ...current, activeRunId: next.id } : current);
+      setRuns(current => [next, ...current.filter(item => item.id !== next.id)]);
     } catch (error) { setError(error instanceof Error ? error.message : 'The run could not start.'); }
     finally { mutation.current = false; setBusy(false); }
   };

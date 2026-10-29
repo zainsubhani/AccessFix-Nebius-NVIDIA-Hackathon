@@ -38,6 +38,8 @@ app.use((req, res, next) => {
   next();
 });
 const active = new Map<string, AbortController>();
+// Hosted fixtures are immutable image contents; cache only these three public previews.
+const hostedPreviews = new Map<string, Promise<string>>();
 recoverInterruptedRuns();
 if (deployment.hosted) { prepareHostedEvidence(); pruneHostedRuns(); }
 app.get('/api/health', (_req, res) => res.json({ ok: true, service: 'accessfix' }));
@@ -62,7 +64,15 @@ app.get('/api/fixtures/:id/preview', async (req, res) => {
   const fixture = getFixture(req.params.id);
   if (!fixture) { res.status(404).send('Fixture not found.'); return; }
   res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'; form-action 'none'; frame-ancestors 'self'; sandbox allow-scripts");
-  res.type('html').send(await compileFixture(fixtureSource(fixture.id)));
+  let preview = deployment.hosted ? hostedPreviews.get(fixture.id) : undefined;
+  if (!preview) {
+    preview = compileFixture(fixtureSource(fixture.id));
+    if (deployment.hosted) {
+      hostedPreviews.set(fixture.id, preview);
+      void preview.catch(() => hostedPreviews.delete(fixture.id));
+    }
+  }
+  res.type('html').send(await preview);
 });
 app.get('/api/runs', (_req, res) => res.json(listRuns().map(({ source, attempts, ...run }) => ({ ...run, attempts: attempts.map(({ source, patch, ...attempt }) => attempt) }))));
 app.get('/api/runs/:id', (req, res) => { const run = readRun(req.params.id); if (!run) res.status(404).json({ error: 'Run not found.' }); else res.json(run); });
@@ -79,8 +89,11 @@ app.post('/api/runs', (req, res) => {
   }
   const run = createRun(fixture, mode as RunMode);
   const controller = new AbortController(); active.set(run.id, controller);
-  void executeRun(run, controller.signal, undefined, { maxAttempts: deployment.maxAttempts, executionProfile: deployment.executionProfile }).finally(() => active.delete(run.id));
   res.status(202).json(run);
+  // Flush the accepted response before TypeScript compilation can occupy the shared CPU.
+  setImmediate(() => {
+    void executeRun(run, controller.signal, undefined, { maxAttempts: deployment.maxAttempts, executionProfile: deployment.executionProfile }).finally(() => active.delete(run.id));
+  });
 });
 app.post('/api/runs/:id/cancel', (req, res) => {
   const controller = active.get(req.params.id);

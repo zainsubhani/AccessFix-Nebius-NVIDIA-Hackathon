@@ -34,9 +34,16 @@ try {
   const preview = await request('/api/fixtures/signup/preview');
   assert.equal(preview.status, 200);
   assert.match(await preview.text(), /AccessFix signup fixture/);
+  const repeatedPreviewAt = Date.now();
+  const repeatedPreview = await request('/api/fixtures/signup/preview');
+  assert.equal(repeatedPreview.status, 200);
+  await repeatedPreview.text();
+  assert.ok(Date.now() - repeatedPreviewAt < 3000, 'Reopening the hosted workbench must reuse its fixed preview.');
   for (const [fixture, mode, expected] of [['healthy', 'audit', 'clean'], ['signup', 'verify-regression', 'rejected']]) {
+    const submittedAt = Date.now();
     const response = await request('/api/runs', { fixture, mode });
     assert.equal(response.status, 202);
+    assert.ok(Date.now() - submittedAt < 10_000, 'Accept runs promptly before expensive compilation starts.');
     const started = await response.json();
     let finished;
     let consecutiveReadFailures = 0;

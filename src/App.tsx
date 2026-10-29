@@ -21,6 +21,6 @@ export default function App() {
       {page === 'workbench' && <Workbench config={model.config} run={model.run} active={model.active} busy={model.busy} loading={model.loading} start={model.start} cancel={model.cancel} clear={() => model.select('')} setup={() => navigate('setup')} />}
       {page === 'history' && <History runs={model.runs} inspect={id => { model.select(id); navigate('workbench'); }} back={() => navigate('workbench')} />}
       {page === 'setup' && <Setup config={model.config} refresh={() => { void model.refresh().catch(() => undefined); }} />}
-      <footer className="page-footer"><span>AccessFix · Local preview</span><span>NVIDIA Nemotron × Nebius Token Factory</span></footer>
+      <footer className="page-footer"><span>AccessFix · {model.config?.hostedDemo ? 'Judge demo' : 'Local preview'}</span><span>NVIDIA Nemotron × Nebius Token Factory</span></footer>
     </main></div>;
 }
