@@ -31,7 +31,7 @@ export function useWorkbench() {
     const controller = new AbortController(); let timer: ReturnType<typeof setTimeout>;
     const poll = async () => {
       try { await refresh(controller.signal); }
-      catch { if (!controller.signal.aborted) setConnectionError('The local runner is unavailable. Reconnecting automatically; saved results remain visible.'); }
+      catch { if (!controller.signal.aborted) setConnectionError('The runner is unavailable. Reconnecting automatically; saved results remain visible.'); }
       finally { if (!controller.signal.aborted) { setLoading(false); timer = setTimeout(poll, 3500); } }
     };
     void poll(); return () => { controller.abort(); clearTimeout(timer); };

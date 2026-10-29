@@ -16,6 +16,7 @@ export interface Run {
   baseline?: Evidence; attempts: Attempt[]; summary: string; error?: string;
   source: string; sourceHash: string; contractHash: string; model?: string; usage: Usage;
   humanChecks: string[];
+  recordedDemo?: boolean;
 }
-export interface Config { providerConfigured: boolean; model: string; fixtures: Fixture[]; maxAttempts: number; activeRunId?: string; }
+export interface Config { providerConfigured: boolean; model: string; fixtures: Fixture[]; maxAttempts: number; activeRunId?: string; hostedDemo?: boolean; ephemeralStorage?: boolean; repairAvailable?: boolean; repairUnavailableReason?: string; modelRequestsRemaining?: number; }
 export interface SignupPayload { email: string; password: string; terms: boolean; }

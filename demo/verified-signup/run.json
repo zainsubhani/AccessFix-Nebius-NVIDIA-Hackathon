@@ -1,0 +1,214 @@
+{
+  "id": "20059716-75ab-457d-a685-28d0d9671158",
+  "fixture": "signup",
+  "fixtureName": "React signup",
+  "file": "examples/signup/Signup.tsx",
+  "mode": "repair",
+  "state": "accepted",
+  "createdAt": "2026-10-29T15:05:52.112Z",
+  "events": [
+    {
+      "at": "2026-10-29T15:05:52.113Z",
+      "stage": "auditing",
+      "message": "Reproducing the signup journey in Chromium."
+    },
+    {
+      "at": "2026-10-29T15:05:53.974Z",
+      "stage": "proposing",
+      "message": "Asking NVIDIA Nemotron for a component patch (attempt 1/1)."
+    },
+    {
+      "at": "2026-10-29T15:06:00.067Z",
+      "stage": "verifying",
+      "message": "Replaying the unchanged checks against candidate 1."
+    },
+    {
+      "at": "2026-10-29T15:06:02.584Z",
+      "stage": "accepted",
+      "message": "The candidate passed every automated check. The patch is ready for human review."
+    }
+  ],
+  "attempts": [
+    {
+      "number": 1,
+      "rationale": "Added proper labels with htmlFor/id, converted submit to native button, used refs for focus management, error state as object with field/message, set aria-invalid and aria-describedby, added live region for announcements, kept validation logic and onSubmit signature unchanged.",
+      "source": "import { useState, useRef } from 'react';\n\ntype Props = { onSubmit: (value: { email: string; password: string; terms: boolean }) => void };\n\nexport default function Signup({ onSubmit }: Props) {\n  const [email, setEmail] = useState('');\n  const [password, setPassword] = useState('');\n  const [terms, setTerms] = useState(false);\n  const [error, setError] = useState<{ field: string; message: string } | null>(null);\n  const emailRef = useRef<HTMLInputElement>(null);\n  const passwordRef = useRef<HTMLInputElement>(null);\n  const termsRef = useRef<HTMLInputElement>(null);\n\n  function submit() {\n    // clear previous error\n    setError(null);\n    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {\n      const err = { field: 'email', message: 'Enter a valid email address.' };\n      setError(err);\n      emailRef.current?.focus();\n      return;\n    }\n    if (password.length < 8) {\n      const err = { field: 'password', message: 'Use at least 8 characters.' };\n      setError(err);\n      passwordRef.current?.focus();\n      return;\n    }\n    if (!terms) {\n      const err = { field: 'terms', message: 'Accept the terms to continue.' };\n      setError(err);\n      termsRef.current?.focus();\n      return;\n    }\n    onSubmit({ email, password, terms });\n  }\n\n  return (\n    <form noValidate onSubmit={e => {\n      e.preventDefault();\n      submit();\n    }}>\n      <h1>Create your account</h1>\n      <div className=\"field\">\n        <label htmlFor=\"email-input\">Email</label>\n        <input\n          id=\"email-input\"\n          data-testid=\"email\"\n          type=\"email\"\n          value={email}\n          placeholder=\"you@example.com\"\n          onChange={e => setEmail(e.target.value)}\n          ref={emailRef}\n          aria-invalid={error?.field === 'email' ? 'true' : undefined}\n          aria-describedby={error?.field === 'email' ? 'email-error' : undefined}\n        />\n        {error?.field === 'email' && (\n          <p id=\"email-error\" className=\"form-error\" hidden={false}>\n            {error.message}\n          </p>\n        )}\n      </div>\n      <div className=\"field\">\n        <label htmlFor=\"password-input\">Password</label>\n        <input\n          id=\"password-input\"\n          data-testid=\"password\"\n          type=\"password\"\n          value={password}\n          placeholder=\"At least 8 characters\"\n          onChange={e => setPassword(e.target.value)}\n          ref={passwordRef}\n          aria-invalid={error?.field === 'password' ? 'true' : undefined}\n          aria-describedby={error?.field === 'password' ? 'password-error' : undefined}\n        />\n        {error?.field === 'password' && (\n          <p id=\"password-error\" className=\"form-error\" hidden={false}>\n            {error.message}\n          </p>\n        )}\n      </div>\n      <label className=\"terms\">\n        <input\n          id=\"terms-input\"\n          data-testid=\"terms\"\n          type=\"checkbox\"\n          checked={terms}\n          onChange={e => setTerms(e.target.checked)}\n          ref={termsRef}\n          aria-invalid={error?.field === 'terms' ? 'true' : undefined}\n          aria-describedby={error?.field === 'terms' ? 'terms-error' : undefined}\n        />\n        I agree to the terms\n        {error?.field === 'terms' && (\n          <p id=\"terms-error\" className=\"form-error\" hidden={false}>\n            {error.message}\n          </p>\n        )}\n      </label>\n      {/* Live region for screen readers */}\n      {error && <div role=\"alert\" aria-live=\"assertive\" className=\"sr-only\">{error.message}</div>}\n      <button type=\"submit\" className=\"submit\" data-testid=\"submit\">\n        Create account\n      </button>\n    </form>\n  );\n}",
+      "patch": "===================================================================\n--- a/examples/signup/Signup.tsx\toriginal\n+++ b/examples/signup/Signup.tsx\tcandidate\n@@ -1,25 +1,107 @@\n-import { useState } from 'react';\n+import { useState, useRef } from 'react';\n \n type Props = { onSubmit: (value: { email: string; password: string; terms: boolean }) => void };\n \n export default function Signup({ onSubmit }: Props) {\n   const [email, setEmail] = useState('');\n   const [password, setPassword] = useState('');\n   const [terms, setTerms] = useState(false);\n-  const [error, setError] = useState('');\n+  const [error, setError] = useState<{ field: string; message: string } | null>(null);\n+  const emailRef = useRef<HTMLInputElement>(null);\n+  const passwordRef = useRef<HTMLInputElement>(null);\n+  const termsRef = useRef<HTMLInputElement>(null);\n+\n   function submit() {\n-    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return setError('Enter a valid email address.');\n-    if (password.length < 8) return setError('Use at least 8 characters.');\n-    if (!terms) return setError('Accept the terms to continue.');\n-    setError('');\n+    // clear previous error\n+    setError(null);\n+    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {\n+      const err = { field: 'email', message: 'Enter a valid email address.' };\n+      setError(err);\n+      emailRef.current?.focus();\n+      return;\n+    }\n+    if (password.length < 8) {\n+      const err = { field: 'password', message: 'Use at least 8 characters.' };\n+      setError(err);\n+      passwordRef.current?.focus();\n+      return;\n+    }\n+    if (!terms) {\n+      const err = { field: 'terms', message: 'Accept the terms to continue.' };\n+      setError(err);\n+      termsRef.current?.focus();\n+      return;\n+    }\n     onSubmit({ email, password, terms });\n   }\n-  return <form noValidate onSubmit={event => { event.preventDefault(); submit(); }}>\n-    <h1>Create your account</h1>\n-    <div className=\"field\"><span>Email</span><input data-testid=\"email\" type=\"email\" value={email} placeholder=\"you@example.com\" onChange={e => setEmail(e.target.value)} /></div>\n-    <div className=\"field\"><span>Password</span><input data-testid=\"password\" type=\"password\" value={password} placeholder=\"At least 8 characters\" onChange={e => setPassword(e.target.value)} /></div>\n-    <label className=\"terms\"><input data-testid=\"terms\" type=\"checkbox\" checked={terms} onChange={e => setTerms(e.target.checked)} />I agree to the terms</label>\n-    {error && <p className=\"form-error\">{error}</p>}\n-    <div className=\"submit\" data-testid=\"submit\" onClick={submit}>Create account</div>\n-  </form>;\n-}\n+\n+  return (\n+    <form noValidate onSubmit={e => {\n+      e.preventDefault();\n+      submit();\n+    }}>\n+      <h1>Create your account</h1>\n+      <div className=\"field\">\n+        <label htmlFor=\"email-input\">Email</label>\n+        <input\n+          id=\"email-input\"\n+          data-testid=\"email\"\n+          type=\"email\"\n+          value={email}\n+          placeholder=\"you@example.com\"\n+          onChange={e => setEmail(e.target.value)}\n+          ref={emailRef}\n+          aria-invalid={error?.field === 'email' ? 'true' : undefined}\n+          aria-describedby={error?.field === 'email' ? 'email-error' : undefined}\n+        />\n+        {error?.field === 'email' && (\n+          <p id=\"email-error\" className=\"form-error\" hidden={false}>\n+            {error.message}\n+          </p>\n+        )}\n+      </div>\n+      <div className=\"field\">\n+        <label htmlFor=\"password-input\">Password</label>\n+        <input\n+          id=\"password-input\"\n+          data-testid=\"password\"\n+          type=\"password\"\n+          value={password}\n+          placeholder=\"At least 8 characters\"\n+          onChange={e => setPassword(e.target.value)}\n+          ref={passwordRef}\n+          aria-invalid={error?.field === 'password' ? 'true' : undefined}\n+          aria-describedby={error?.field === 'password' ? 'password-error' : undefined}\n+        />\n+        {error?.field === 'password' && (\n+          <p id=\"password-error\" className=\"form-error\" hidden={false}>\n+            {error.message}\n+          </p>\n+        )}\n+      </div>\n+      <label className=\"terms\">\n+        <input\n+          id=\"terms-input\"\n+          data-testid=\"terms\"\n+          type=\"checkbox\"\n+          checked={terms}\n+          onChange={e => setTerms(e.target.checked)}\n+          ref={termsRef}\n+          aria-invalid={error?.field === 'terms' ? 'true' : undefined}\n+          aria-describedby={error?.field === 'terms' ? 'terms-error' : undefined}\n+        />\n+        I agree to the terms\n+        {error?.field === 'terms' && (\n+          <p id=\"terms-error\" className=\"form-error\" hidden={false}>\n+            {error.message}\n+          </p>\n+        )}\n+      </label>\n+      {/* Live region for screen readers */}\n+      {error && <div role=\"alert\" aria-live=\"assertive\" className=\"sr-only\">{error.message}</div>}\n+      <button type=\"submit\" className=\"submit\" data-testid=\"submit\">\n+        Create account\n+      </button>\n+    </form>\n+  );\n+}\n\\ No newline at end of file\n",
+      "accepted": true,
+      "regressions": [],
+      "evidence": {
+        "checks": [
+          {
+            "id": "labels",
+            "name": "Fields have accessible labels",
+            "category": "accessibility",
+            "passed": true,
+            "detail": "Email, password and consent can be identified by their accessible names."
+          },
+          {
+            "id": "keyboard",
+            "name": "Complete signup using only the keyboard",
+            "category": "accessibility",
+            "passed": true,
+            "detail": "Tab → email → password → consent → Enter reached the confirmation screen."
+          },
+          {
+            "id": "validation-feedback",
+            "name": "Validation errors are announced and linked",
+            "category": "accessibility",
+            "passed": true,
+            "detail": "All three invalid fields expose their state, associated error text, and a live message."
+          },
+          {
+            "id": "focus-management",
+            "name": "Focus moves to the first invalid field",
+            "category": "accessibility",
+            "passed": true,
+            "detail": "Submit moves focus to email, password or consent according to the first error."
+          },
+          {
+            "id": "valid-submit",
+            "name": "Valid signup still submits the correct data",
+            "category": "regression",
+            "passed": true,
+            "detail": "One submission contains the original email, password and explicit consent."
+          },
+          {
+            "id": "invalid-email",
+            "name": "Malformed email is rejected",
+            "category": "regression",
+            "passed": true,
+            "detail": "Malformed email cannot create an account."
+          },
+          {
+            "id": "short-password",
+            "name": "Short passwords are rejected",
+            "category": "regression",
+            "passed": true,
+            "detail": "A password shorter than 8 characters cannot create an account."
+          },
+          {
+            "id": "consent",
+            "name": "Consent is required before signup",
+            "category": "regression",
+            "passed": true,
+            "detail": "Unchecked consent blocks the submission."
+          },
+          {
+            "id": "axe",
+            "name": "Automated accessibility scan",
+            "category": "accessibility",
+            "passed": true,
+            "detail": "No axe violations found in the initial and invalid states for the selected WCAG tags."
+          },
+          {
+            "id": "runtime",
+            "name": "Component renders without runtime errors",
+            "category": "regression",
+            "passed": true,
+            "detail": "No browser page errors during the journey."
+          }
+        ],
+        "violations": [],
+        "screenshot": "after-1.png",
+        "durationMs": 2502,
+        "consoleErrors": []
+      }
+    }
+  ],
+  "summary": "The candidate passed every automated check. The patch is ready for human review.",
+  "source": "import { useState } from 'react';\n\ntype Props = { onSubmit: (value: { email: string; password: string; terms: boolean }) => void };\n\nexport default function Signup({ onSubmit }: Props) {\n  const [email, setEmail] = useState('');\n  const [password, setPassword] = useState('');\n  const [terms, setTerms] = useState(false);\n  const [error, setError] = useState('');\n  function submit() {\n    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return setError('Enter a valid email address.');\n    if (password.length < 8) return setError('Use at least 8 characters.');\n    if (!terms) return setError('Accept the terms to continue.');\n    setError('');\n    onSubmit({ email, password, terms });\n  }\n  return <form noValidate onSubmit={event => { event.preventDefault(); submit(); }}>\n    <h1>Create your account</h1>\n    <div className=\"field\"><span>Email</span><input data-testid=\"email\" type=\"email\" value={email} placeholder=\"you@example.com\" onChange={e => setEmail(e.target.value)} /></div>\n    <div className=\"field\"><span>Password</span><input data-testid=\"password\" type=\"password\" value={password} placeholder=\"At least 8 characters\" onChange={e => setPassword(e.target.value)} /></div>\n    <label className=\"terms\"><input data-testid=\"terms\" type=\"checkbox\" checked={terms} onChange={e => setTerms(e.target.checked)} />I agree to the terms</label>\n    {error && <p className=\"form-error\">{error}</p>}\n    <div className=\"submit\" data-testid=\"submit\" onClick={submit}>Create account</div>\n  </form>;\n}\n",
+  "sourceHash": "4193e8d42911cc9d94d04b7d8bd2f1bf6e82992d730ebb25aac4fa062a22ae09",
+  "contractHash": "bac1031e66037e5f2c874f70f7697c65cb59c6b03e5e42931bde8f6cb9699f32",
+  "usage": {
+    "inputTokens": 1999,
+    "outputTokens": 1072,
+    "requests": 1,
+    "latencyMs": 6089
+  },
+  "humanChecks": [
+    "Screen reader announcements and reading order need manual testing with assistive technology.",
+    "This component harness does not test your full app, backend, authentication, or surrounding routes.",
+    "Automated checks cover the specified signup journey; they do not establish complete WCAG conformance."
+  ],
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "baseline": {
+    "checks": [
+      {
+        "id": "labels",
+        "name": "Fields have accessible labels",
+        "category": "accessibility",
+        "passed": false,
+        "detail": "Email is not programmatically associated with its control."
+      },
+      {
+        "id": "keyboard",
+        "name": "Complete signup using only the keyboard",
+        "category": "accessibility",
+        "passed": false,
+        "detail": "The submit control was not reachable within 12 Tab presses."
+      },
+      {
+        "id": "validation-feedback",
+        "name": "Validation errors are announced and linked",
+        "category": "accessibility",
+        "passed": false,
+        "detail": "email: invalid state is not exposed with aria-invalid."
+      },
+      {
+        "id": "focus-management",
+        "name": "Focus moves to the first invalid field",
+        "category": "accessibility",
+        "passed": false,
+        "detail": "Focus did not move to the invalid email field after submit."
+      },
+      {
+        "id": "valid-submit",
+        "name": "Valid signup still submits the correct data",
+        "category": "regression",
+        "passed": true,
+        "detail": "One submission contains the original email, password and explicit consent."
+      },
+      {
+        "id": "invalid-email",
+        "name": "Malformed email is rejected",
+        "category": "regression",
+        "passed": true,
+        "detail": "Malformed email cannot create an account."
+      },
+      {
+        "id": "short-password",
+        "name": "Short passwords are rejected",
+        "category": "regression",
+        "passed": true,
+        "detail": "A password shorter than 8 characters cannot create an account."
+      },
+      {
+        "id": "consent",
+        "name": "Consent is required before signup",
+        "category": "regression",
+        "passed": true,
+        "detail": "Unchecked consent blocks the submission."
+      },
+      {
+        "id": "axe",
+        "name": "Automated accessibility scan",
+        "category": "accessibility",
+        "passed": true,
+        "detail": "No axe violations found in the initial and invalid states for the selected WCAG tags."
+      },
+      {
+        "id": "runtime",
+        "name": "Component renders without runtime errors",
+        "category": "regression",
+        "passed": true,
+        "detail": "No browser page errors during the journey."
+      }
+    ],
+    "violations": [],
+    "screenshot": "before.png",
+    "durationMs": 1846,
+    "consoleErrors": []
+  },
+  "finishedAt": "2026-10-29T15:06:02.584Z"
+}

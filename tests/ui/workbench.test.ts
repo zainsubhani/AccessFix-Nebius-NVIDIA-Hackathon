@@ -100,9 +100,9 @@ test('keyboard navigation, missing-key status and API failure recovery are expli
     await page.getByRole('link', { name: 'Export report', exact: true }).waitFor({ timeout: 30000 });
     assert.match(await page.locator('.result-summary').innerText(), /No patch is needed/);
     await page.route('**/api/config', route => route.abort());
-    await page.getByRole('alert').filter({ hasText: 'The local runner is unavailable.' }).waitFor({ timeout: 10000 });
+    await page.getByRole('alert').filter({ hasText: 'The runner is unavailable.' }).waitFor({ timeout: 10000 });
     assert.ok(await page.getByRole('link', { name: 'Export report', exact: true }).isVisible());
     await page.unroute('**/api/config');
-    await page.getByRole('alert').filter({ hasText: 'The local runner is unavailable.' }).waitFor({ state: 'hidden', timeout: 10000 });
+    await page.getByRole('alert').filter({ hasText: 'The runner is unavailable.' }).waitFor({ state: 'hidden', timeout: 10000 });
   } finally { await browser.close(); }
 });

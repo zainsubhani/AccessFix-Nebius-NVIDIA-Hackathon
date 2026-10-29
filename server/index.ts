@@ -6,19 +6,31 @@ import { ROOT, fixtures, getFixture, fixtureSource, providerConfig } from './con
 import { createRun, executeRun, listRuns, readRun, recoverInterruptedRuns, runDirectory } from './runner.js';
 import { compileFixture } from './fixture-host.js';
 import { reportHtml } from './report.js';
+import { deploymentConfig, demoAuthentication, DemoBudget } from './deployment.js';
+import { prepareHostedEvidence, pruneHostedRuns } from './hosted-evidence.js';
 
+const deployment = deploymentConfig();
+const budget = new DemoBudget(deployment);
 const app = express();
 app.disable('x-powered-by');
-app.use(express.json({ limit: '4kb' }));
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'no-referrer');
   res.setHeader('Cache-Control', 'no-store');
-  // The MVP is a local tool. Block browser cross-origin writes to the local runner.
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'self'");
+  next();
+});
+app.use(demoAuthentication(deployment));
+app.use(express.json({ limit: '4kb' }));
+app.use((req, res, next) => {
   if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
     const origin = req.headers.origin;
     if (origin) {
-      try { if (!['127.0.0.1', 'localhost', '[::1]'].includes(new URL(origin).hostname)) { res.status(403).json({ error: 'Cross-origin run requests are not allowed.' }); return; } }
+      try {
+        const url = new URL(origin);
+        const allowed = deployment.hosted ? url.origin === deployment.origin : ['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname);
+        if (!allowed) { res.status(403).json({ error: 'Cross-origin run requests are not allowed.' }); return; }
+      }
       catch { res.status(403).json({ error: 'Invalid origin.' }); return; }
     }
     if (!req.is('application/json')) { res.status(415).json({ error: 'Send application/json.' }); return; }
@@ -27,9 +39,18 @@ app.use((req, res, next) => {
 });
 const active = new Map<string, AbortController>();
 recoverInterruptedRuns();
+if (deployment.hosted) { prepareHostedEvidence(); pruneHostedRuns(); }
 app.get('/api/health', (_req, res) => res.json({ ok: true, service: 'accessfix' }));
 app.get('/api/config', (_req, res) => {
-  try { const config = providerConfig(); res.json({ providerConfigured: !!config.apiKey, model: config.model, fixtures, maxAttempts: 2, activeRunId: [...active.keys()][0] }); }
+  try {
+    const config = providerConfig();
+    const remaining = deployment.hosted ? budget.remaining() : undefined;
+    res.json({ providerConfigured: !!config.apiKey, model: config.model, fixtures, maxAttempts: deployment.maxAttempts, activeRunId: [...active.keys()][0], hostedDemo: deployment.hosted, ephemeralStorage: deployment.ephemeral,
+      repairAvailable: !!config.apiKey && (!deployment.hosted || remaining! > 0),
+      repairUnavailableReason: deployment.hosted ? deployment.ephemeral ? 'This free demo shows recorded AI repairs. New model requests are disabled; browser audits and the verification lab remain available.' : !config.apiKey ? 'Live repair is not configured for this demo. Explore saved evidence, audits and the verification lab.' : remaining === 0 ? 'Live-repair budget is exhausted or disabled. Saved evidence, audits and the verification lab remain available.' : undefined : undefined,
+      modelRequestsRemaining: remaining,
+    });
+  }
   catch (error) { res.status(500).json({ error: error instanceof Error ? error.message : 'Invalid provider configuration.' }); }
 });
 app.get('/api/fixtures/:id/source', (req, res) => {
@@ -40,7 +61,7 @@ app.get('/api/fixtures/:id/source', (req, res) => {
 app.get('/api/fixtures/:id/preview', async (req, res) => {
   const fixture = getFixture(req.params.id);
   if (!fixture) { res.status(404).send('Fixture not found.'); return; }
-  res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'; form-action 'none'; sandbox allow-scripts");
+  res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'; form-action 'none'; frame-ancestors 'self'; sandbox allow-scripts");
   res.type('html').send(await compileFixture(fixtureSource(fixture.id)));
 });
 app.get('/api/runs', (_req, res) => res.json(listRuns().map(({ source, attempts, ...run }) => ({ ...run, attempts: attempts.map(({ source, patch, ...attempt }) => attempt) }))));
@@ -51,9 +72,14 @@ app.post('/api/runs', (req, res) => {
   if (typeof fixture !== 'string' || !getFixture(fixture) || !['audit', 'repair', 'verify-good', 'verify-regression'].includes(mode)) { res.status(400).json({ error: 'Choose a supported fixture and run mode.' }); return; }
   if (mode === 'repair' && !providerConfig().apiKey) { res.status(409).json({ error: 'Add NEBIUS_API_KEY to .env before starting live repair. Audits and verification exercises work without a key.' }); return; }
   if (mode.startsWith('verify-') && fixture !== 'signup') { res.status(400).json({ error: 'The known-patch verification lab uses the React signup fixture.' }); return; }
+  if (deployment.hosted) {
+    const denied = budget.reserve(mode === 'repair');
+    if (denied) { res.status(429).json({ error: denied }); return; }
+    pruneHostedRuns();
+  }
   const run = createRun(fixture, mode as RunMode);
   const controller = new AbortController(); active.set(run.id, controller);
-  void executeRun(run, controller.signal).finally(() => active.delete(run.id));
+  void executeRun(run, controller.signal, undefined, { maxAttempts: deployment.maxAttempts }).finally(() => active.delete(run.id));
   res.status(202).json(run);
 });
 app.post('/api/runs/:id/cancel', (req, res) => {
@@ -82,10 +108,14 @@ const dist = path.join(ROOT, 'dist');
 if (existsSync(dist)) { app.use(express.static(dist)); app.get('/{*path}', (_req, res) => res.sendFile(path.join(dist, 'index.html'))); }
 app.use((error: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   const invalidJson = error instanceof SyntaxError;
-  res.status(invalidJson ? 400 : 500).json({ error: invalidJson ? 'Invalid JSON request.' : 'The local runner could not complete this request. Check the server configuration and retry.' });
+  const tooLarge = 'type' in error && error.type === 'entity.too.large';
+  res.status(tooLarge ? 413 : invalidJson ? 400 : 500).json({ error: tooLarge ? 'Request exceeds the 4 KB limit.' : invalidJson ? 'Invalid JSON request.' : 'The runner could not complete this request. Check the server configuration and retry.' });
 });
 const port = Number(process.env.PORT || 3001);
-const server = app.listen(port, '127.0.0.1', () => console.log(`AccessFix runner: http://127.0.0.1:${port}`));
+const server = app.listen(port, deployment.host, () => {
+  const address = server.address();
+  console.log(`AccessFix runner: http://${deployment.host}:${typeof address === 'object' && address ? address.port : port}`);
+});
 for (const signal of ['SIGINT', 'SIGTERM'] as const) process.once(signal, () => {
   for (const controller of active.values()) controller.abort();
   server.close(); setTimeout(() => process.exit(0), 1000).unref();

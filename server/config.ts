@@ -5,7 +5,8 @@ import dotenv from 'dotenv';
 import type { Fixture, FixtureId } from '../shared/types.js';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const RUNS_DIR = path.join(ROOT, '.accessfix', 'runs');
+export const DATA_DIR = path.resolve(process.env.ACCESSFIX_DATA_DIR || path.join(ROOT, '.accessfix'));
+export const RUNS_DIR = path.join(DATA_DIR, 'runs');
 export const fixtures: Fixture[] = [
   { id: 'signup', name: 'React signup', description: 'Keyboard and form-label barriers', file: 'examples/signup/Signup.tsx' },
   { id: 'team', name: 'Team invitation', description: 'Validation feedback and focus barriers', file: 'examples/team/Signup.tsx' },

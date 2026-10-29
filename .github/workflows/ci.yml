@@ -53,3 +53,13 @@ jobs:
             exit 1
           fi
           npm run test:ui
+  container:
+    name: Free-tier container smoke test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Build the deployment image
+        run: docker build -t accessfix:judge-demo .
+      - name: Verify the free-tier resource budget without inference
+        run: node scripts/container-smoke.mjs
