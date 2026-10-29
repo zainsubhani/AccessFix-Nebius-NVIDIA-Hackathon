@@ -7,7 +7,8 @@ export interface Check { id: string; name: string; passed: boolean; detail: stri
 export interface Violation { id: string; impact: string; description: string; helpUrl: string; nodes: string[]; }
 export interface Evidence { checks: Check[]; violations: Violation[]; screenshot: string; durationMs: number; consoleErrors: string[]; }
 export interface RunEvent { at: string; stage: RunState; message: string; }
-export interface Attempt { number: number; rationale: string; source: string; patch: string; evidence?: Evidence; error?: string; accepted: boolean; regressions: string[]; }
+export interface RepairDiagnostic { code: 'changed-validation-regex' | 'unattached-ref' | 'render-state-focus'; message: string; line?: number; }
+export interface Attempt { number: number; rationale: string; source: string; patch: string; evidence?: Evidence; error?: string; accepted: boolean; regressions: string[]; diagnostics?: RepairDiagnostic[]; }
 export interface Usage { inputTokens: number; outputTokens: number; requests: number; latencyMs: number; }
 export interface Run {
   id: string; fixture: string; fixtureName: string; file: string; mode: RunMode; state: RunState;

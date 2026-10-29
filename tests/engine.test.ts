@@ -58,7 +58,11 @@ test('bounded retry uses real verification and leaves the source file unchanged'
   try {
     const finished = await executeRun(run, new AbortController().signal, async (_source, _evidence, feedback) => {
       calls++;
-      if (calls === 2) assert.match(feedback || '', /Consent is required/);
+      if (calls === 2) {
+        assert.ok(feedback);
+        assert.ok(feedback.regressions.includes('Consent is required before signup'));
+        assert.equal(feedback.candidate, knownCandidate('regression'));
+      }
       return { source: knownCandidate(calls === 1 ? 'regression' : 'good'), rationale: 'Injected candidate for automated runner testing, not a live AI response.', usage: { inputTokens: 0, outputTokens: 0, requests: 0, latencyMs: 0 } };
     });
     assert.equal(calls, 2); assert.equal(finished.state, 'accepted');

@@ -10,6 +10,7 @@ AccessFix separates model proposals from acceptance. The model supplies one comp
 | Local API | Express | Configuration status, one active dashboard run, cancellation and artifacts |
 | Runner | `server/runner.ts` | Baseline audit, bounded proposal/verification loop, terminal states and persistence |
 | Provider adapter | `server/provider.ts` | Server-side Nebius authentication, NVIDIA model request and strict tool-call parsing |
+| Repair context | `server/repair-context.ts` | Readable source context and advisory diagnostics for rejected candidates |
 | Browser checks | Playwright and axe-core | User interactions, validation behavior, accessibility scans and screenshots |
 | Component harness | esbuild and React | React-only source bundling and a wrapper-owned submit callback |
 
@@ -23,6 +24,8 @@ AccessFix separates model proposals from acceptance. The model supplies one comp
 6. If necessary, request one further proposal using actual failed-check feedback. Persist the final accepted, rejected, unresolved, error or cancelled state.
 
 There are at most two model requests per repair run, a 120-second provider-request timeout and a 60-second limit for each component inspection. The original file is never overwritten. An accepted diff is an output for human review.
+
+The provider receives original and previous-candidate source as separate plain-text sections, with structured browser observations alongside them. Source is not nested inside a second JSON string. Retry feedback preserves failed checks, regressions and execution errors. Advisory TypeScript syntax analysis also highlights changed regular-expression literals and, after a focus-check failure, unattached refs or focus decisions that read React error state. These observations are heuristics, not proof of a defect; they neither edit source nor alter acceptance. Candidate diagnostics are saved in the run JSON.
 
 ## Protected behavior
 
