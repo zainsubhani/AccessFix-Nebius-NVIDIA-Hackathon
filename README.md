@@ -127,3 +127,7 @@ The checks cover four explicitly defined component contracts. They do not establ
 ## GitHub review workflow
 
 An accepted component can be exported from the local workspace as a draft PR after reviewing its destination and diff. AccessFix checks that the GitHub file exactly matches the audited baseline and changes only that file. Shared judge demos disable repository writes. See [GitHub export](docs/github-export.md) for authentication, supported paths and retry recovery.
+
+## Temporary judge worker
+
+For faster fresh browser checks, run a password-protected Mac worker with `npm run judge -- --tunnel --keep-awake`. Its launcher forces inference and repository writes off. See [judge worker setup](docs/judge-worker.md) for private credentials, tunnel installation and availability limits.

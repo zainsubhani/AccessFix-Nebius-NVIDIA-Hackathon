@@ -52,7 +52,7 @@ app.get('/api/config', (_req, res) => {
     res.json({ providerConfigured: !!config.apiKey, model: config.model, fixtures, maxAttempts: deployment.maxAttempts, activeRunId: [...active.keys()][0], hostedDemo: deployment.hosted, ephemeralStorage: deployment.ephemeral,
       repairAvailable: !!config.apiKey && (!deployment.hosted || remaining! > 0),
       repairUnavailableReason: deployment.hosted ? deployment.ephemeral ? 'This free demo shows recorded AI repairs. New model requests are disabled; browser audits and the verification lab remain available.' : !config.apiKey ? 'Live repair is not configured for this demo. Explore saved evidence, audits and the verification lab.' : remaining === 0 ? 'Live-repair budget is exhausted or disabled. Saved evidence, audits and the verification lab remain available.' : undefined : undefined,
-      modelRequestsRemaining: remaining,
+      modelRequestsRemaining: remaining, judgeWorker: process.env.ACCESSFIX_JUDGE_WORKER === 'true',
     });
   }
   catch (error) { res.status(500).json({ error: error instanceof Error ? error.message : 'Invalid provider configuration.' }); }

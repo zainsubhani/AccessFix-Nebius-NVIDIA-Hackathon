@@ -67,3 +67,7 @@ The `start` command uses `tsx`; the frontend must already be built. The API, sha
 ## Execution boundary
 
 The hosted API accepts only fixed public fixture identifiers. General repository or component upload is not enabled. Supporting arbitrary untrusted code requires stronger workload isolation, resource limits and a separate architecture review. The component harness is not a multitenant security boundary, and these checks do not establish full WCAG conformance.
+
+## Temporary Mac worker
+
+A separately authenticated Mac worker can handle fresh fixed-fixture browser checks while Render Free serves as a fallback. The [worker launcher](judge-worker.md) forces an empty provider key and zero model budget, uses separate persistent local storage, and keeps GitHub export disabled. It is temporary judge infrastructure; the Mac and tunnel must remain running.
