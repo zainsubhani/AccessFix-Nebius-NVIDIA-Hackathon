@@ -6,6 +6,7 @@ import { ACTIVE_STATES, type Run, type RunMode } from '../shared/types.js';
 import { ROOT, RUNS_DIR, fixtureSource, getFixture, providerConfig } from './config.js';
 import { inspectComponent, evaluateCandidate } from './checks.js';
 import { requestProposal, type Proposal } from './provider.js';
+import { createRepairFeedback, type RepairFeedback } from './repair-context.js';
 
 export const sha256 = (value: string) => createHash('sha256').update(value).digest('hex');
 export const runDirectory = (id: string) => path.join(RUNS_DIR, id);
@@ -63,7 +64,7 @@ export async function executeRun(run: Run, signal: AbortSignal, propose: typeof 
       const failed = run.baseline.checks.filter(check => !check.passed).length;
       transition('audited', `${failed} of ${run.baseline.checks.length} checks failed. Review the evidence or request a repair.`);
     } else {
-      let feedback: string | undefined;
+      let feedback: RepairFeedback | undefined;
       const limit = run.mode === 'repair' ? 2 : 1;
       for (let index = 1; index <= limit; index++) {
         signal.throwIfAborted();
@@ -89,9 +90,12 @@ export async function executeRun(run: Run, signal: AbortSignal, propose: typeof 
           attempt.error = error instanceof Error ? error.message.slice(0, 800) : 'The candidate could not be tested.';
           attempt.regressions = ['Candidate build or browser execution failed.'];
         }
+        if (!attempt.accepted) {
+          feedback = createRepairFeedback(run.source, attempt);
+          attempt.diagnostics = feedback.diagnostics;
+        }
         saveRun(run);
         if (attempt.accepted) { transition('accepted', 'The candidate passed every automated check. The patch is ready for human review.'); break; }
-        feedback = JSON.stringify({ candidate: attempt.source, failed: attempt.evidence?.checks.filter(check => !check.passed), regressions: attempt.regressions, error: attempt.error });
         if (index === limit) transition(attempt.regressions.length ? 'rejected' : 'unresolved', attempt.regressions.length ? 'The candidate introduced a regression or could not run. The patch was rejected.' : 'The attempt limit was reached with failing checks. The issue remains unresolved.');
       }
     }
