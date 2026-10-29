@@ -18,6 +18,32 @@ export async function compileFixture(source: string): Promise<string> {
     ts.forEachChild(node, inspect);
   };
   inspect(parsed);
+  // esbuild strips types; it does not reject semantic TypeScript errors.
+  const file = path.join(ROOT, 'AccessFixComponent.tsx');
+  const options: ts.CompilerOptions = {
+    target: ts.ScriptTarget.ES2022, lib: ['lib.es2022.d.ts', 'lib.dom.d.ts'],
+    module: ts.ModuleKind.ESNext, moduleResolution: ts.ModuleResolutionKind.Bundler,
+    jsx: ts.JsxEmit.ReactJSX, strict: true, esModuleInterop: true,
+    skipLibCheck: true, noEmit: true, types: ['react'],
+  };
+  const host = ts.createCompilerHost(options);
+  const getSourceFile = host.getSourceFile.bind(host);
+  const readFile = host.readFile.bind(host);
+  const fileExists = host.fileExists.bind(host);
+  host.getSourceFile = (name, languageVersion, onError, shouldCreateNewSourceFile) => path.resolve(name) === file
+    ? ts.createSourceFile(file, source, languageVersion, true, ts.ScriptKind.TSX)
+    : getSourceFile(name, languageVersion, onError, shouldCreateNewSourceFile);
+  host.readFile = name => path.resolve(name) === file ? source : readFile(name);
+  host.fileExists = name => path.resolve(name) === file || fileExists(name);
+  const diagnostics = ts.getPreEmitDiagnostics(ts.createProgram([file], options, host))
+    .filter(item => item.category === ts.DiagnosticCategory.Error);
+  if (diagnostics.length) {
+    const details = diagnostics.slice(0, 4).map(item => {
+      const line = item.file && item.start !== undefined ? item.file.getLineAndCharacterOfPosition(item.start).line + 1 : undefined;
+      return `${line ? `Line ${line}: ` : ''}TS${item.code}: ${ts.flattenDiagnosticMessageText(item.messageText, ' ')}`;
+    });
+    throw new Error(`Component failed strict TypeScript checking (${diagnostics.length} errors). ${details.join(' ')} Fix the types without disabling checks.`);
+  }
   const result = await build({
     stdin: { contents: `import React from 'react'; import {createRoot} from 'react-dom/client'; import Signup from 'accessfix-component';
       const events = []; Object.defineProperty(window, '__ACCESSFIX_EVENTS__', {value:events});

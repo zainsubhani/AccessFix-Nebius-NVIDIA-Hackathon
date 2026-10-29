@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { inspectComponent, evaluateCandidate } from '../server/checks.js';
 import { fixtureSource, ROOT } from '../server/config.js';
-import { knownCandidate, createRun, executeRun, runDirectory } from '../server/runner.js';
+import { knownCandidate, createRun, executeRun, runDirectory, verificationHash } from '../server/runner.js';
 import { parseProposal } from '../server/provider.js';
 import { compileFixture } from '../server/fixture-host.js';
 import { reportHtml } from '../server/report.js';
@@ -79,6 +79,46 @@ test('provider failure becomes an explicit error, with no fabricated patch', { t
   try {
     const finished = await executeRun(run, new AbortController().signal, async () => { throw new Error('Nebius returned HTTP 429. Test quota failure.'); });
     assert.equal(finished.state, 'error'); assert.equal(finished.attempts.length, 0); assert.match(finished.summary, /429/);
+  } finally { await rm(runDirectory(run.id), { recursive: true, force: true }); }
+});
+test('strict TypeScript failure reaches the retry instead of exporting a browser-only success', { timeout: 120000 }, async () => {
+  const good = knownCandidate('good');
+  const invalid = good.replace('useState<{ field: string; text: string } | null>(null)', 'useState(null)');
+  assert.notEqual(invalid, good);
+  const run = createRun('signup', 'repair');
+  let calls = 0;
+  try {
+    const finished = await executeRun(run, new AbortController().signal, async (_source, _baseline, feedback) => {
+      calls++;
+      if (calls === 2) {
+        assert.equal(feedback?.candidate, invalid);
+        assert.match(feedback?.error || '', /strict TypeScript/);
+        assert.match(feedback?.error || '', /TS2353/);
+      }
+      return { source: calls === 1 ? invalid : good, rationale: 'Prepared type-check regression candidate; no inference.', usage: { inputTokens: 0, outputTokens: 0, requests: 0, latencyMs: 0 } };
+    });
+    assert.equal(calls, 2);
+    assert.equal(finished.state, 'accepted', finished.error);
+    assert.equal(finished.attempts[0].accepted, false);
+    assert.equal(finished.attempts[0].evidence, undefined);
+    assert.equal(finished.attempts[1].accepted, true);
+    assert.equal(finished.contractHash, verificationHash());
+  } finally { await rm(runDirectory(run.id), { recursive: true, force: true }); }
+});
+test('a one-attempt budget stops after a failed candidate without requesting a second proposal', { timeout: 60000 }, async () => {
+  const run = createRun('signup', 'repair');
+  let calls = 0;
+  try {
+    const finished = await executeRun(run, new AbortController().signal, async () => {
+      calls++;
+      return { source: knownCandidate('good').replace('useState<{ field: string; text: string } | null>(null)', 'useState(null)'), rationale: 'Prepared invalid TypeScript; no inference.', usage: { inputTokens: 0, outputTokens: 0, requests: 0, latencyMs: 0 } };
+    }, { maxAttempts: 1 });
+    assert.equal(calls, 1);
+    assert.equal(finished.usage.requests, 1);
+    assert.equal(finished.attempts.length, 1);
+    assert.equal(finished.state, 'rejected');
+    assert.match(finished.attempts[0].error || '', /strict TypeScript/);
+    assert.equal(fixtureSource('signup'), run.source);
   } finally { await rm(runDirectory(run.id), { recursive: true, force: true }); }
 });
 test('cancelling an active browser run produces a terminal cancelled state', { timeout: 60000 }, async () => {
