@@ -1,0 +1,18 @@
+{
+  "deployedCommit": "e194aa8e890f74cd940b75b6522b0e8e0fc87f65",
+  "question": "The FULL100 order fails. Which evidence should I compare before changing the decision function?",
+  "url": "https://accessfix-nebius-nvidia-demo.onrender.com/api/firststep/coach",
+  "status": 200,
+  "response": {
+    "reply": "Compare the coupon_applied entry (which set totalCents to 0) with the subsequent checkout_attempt that lacks a paymentToken—does the system treat a zero‑total order as needing a token, or does it incorrectly forward it to the payment service? Check whether any later control_order record shows a different total or token presence that could explain the reject.",
+    "source": "NVIDIA Nemotron on Nebius Token Factory",
+    "remaining": 98,
+    "model": "nvidia/nemotron-3-super-120b-a12b",
+    "generatedAt": "2026-10-29T23:06:16.831Z",
+    "usage": {
+      "inputTokens": 404,
+      "outputTokens": 194
+    }
+  },
+  "scope": "One actual coaching request from the hosted application, captured during the prepared demo walkthrough. No learner code was sent. This is runtime evidence, not a learning-outcome or model-quality benchmark."
+}

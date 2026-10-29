@@ -1,0 +1,58 @@
+{
+  "verifiedAt": "2026-10-29T23:07:42.068Z",
+  "deployedCommit": "e194aa8e890f74cd940b75b6522b0e8e0fc87f65",
+  "application": "https://accessfix-nebius-nvidia-demo.onrender.com",
+  "status": "passed",
+  "automatedTests": {
+    "engineAndServer": 42,
+    "browserWorkflows": 7,
+    "ciContainer": "Passed with 512 MB RAM, 0.1 CPU and zero inference requests"
+  },
+  "hostedChecks": [
+    "Authenticated hosting; durable-budget live coaching enabled",
+    "Desktop 1440px automated accessibility and layout",
+    "Original defect reproduced: 7/9 checks; order rejected",
+    "Incident evidence and authored hint open",
+    "Incorrect repair rejected and transfer remains locked",
+    "Correct repair: 9/9; order confirmed; handoff required",
+    "Editing the fix invalidates previous execution evidence",
+    "Transfer task automated accessibility and layout",
+    "Transfer task independently executes 9/9 without authored hints",
+    "Downloaded evidence contains both 9/9 runs, exact drafts, notes and assistance",
+    "Reload restores drafts and notes, requires fresh execution",
+    "Mobile 390px automated accessibility and layout",
+    "Mobile controls execute the repaired checkout successfully",
+    "Small mobile 320px automated accessibility and layout",
+    "/firststep alias and keyboard skip navigation",
+    "Syntax errors, infinite-loop timeout and cancellation recover to a passing run",
+    "Companion workbench route loads",
+    "Unauthenticated access remains protected",
+    "No browser errors, failed requests, server mutations or paid calls"
+  ],
+  "hostedErrors": {
+    "page": [],
+    "console": [],
+    "failedRequests": []
+  },
+  "coaching": {
+    "realRequestsVerified": 2,
+    "remainingReservationsAfterVerification": 98,
+    "totalReservationLimitUSD": 5,
+    "reservationUSDPerAttempt": 0.05,
+    "scope": "This is the FirstStep reservation ledger, not a provider-wide account billing cap."
+  },
+  "video": {
+    "filename": "FirstStep-Hackathon-Demo.mp4",
+    "durationSeconds": 137,
+    "width": 1920,
+    "height": 1080,
+    "videoCodec": "H.264",
+    "audioCodec": "AAC",
+    "captions": "English, embedded mov_text and separate SRT",
+    "sizeBytes": 10622200,
+    "sha256": "5fcc2ebf82f4bc5da232bbeef335c7036da5032b9dc790df2756d21c7d2d3b05",
+    "fullDecode": "passed",
+    "publication": "Awaiting owner approval to upload to YouTube"
+  },
+  "scope": "Point-in-time release verification. No learner outcomes or service-availability guarantee is claimed."
+}

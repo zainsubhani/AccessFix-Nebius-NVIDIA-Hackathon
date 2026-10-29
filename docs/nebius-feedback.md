@@ -2,7 +2,7 @@
 
 ## Observed integration
 
-FirstStep calls `nvidia/nemotron-3-super-120b-a12b` through the OpenAI-compatible Nebius Token Factory chat-completions endpoint. The first live request on 29 October 2026 returned HTTP 200 in 1,581 ms with 406 prompt tokens and 179 completion tokens. The response provided a relevant comparison between zero-total and paid checkout rules. One request is insufficient to assess reliability or teaching effectiveness.
+FirstStep calls `nvidia/nemotron-3-super-120b-a12b` through the OpenAI-compatible Nebius Token Factory chat-completions endpoint. The first live request on 29 October 2026 returned HTTP 200 in 1,581 ms with 406 prompt tokens and 179 completion tokens. The response provided a relevant comparison between zero-total and paid checkout rules. A second request through the hosted Render application returned HTTP 200 with 404 input and 194 output tokens. Its hint focused on comparing the coupon and checkout events. Two requests are insufficient to assess reliability or teaching effectiveness.
 
 ## What worked
 

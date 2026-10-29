@@ -41,9 +41,9 @@ The repository began as AccessFix, an accessibility repair workbench. FirstStep 
 |---|---|
 | Public repository | [FirstStep-Nebius-NVIDIA-Hackathon](https://github.com/zainsubhani/FirstStep-Nebius-NVIDIA-Hackathon) |
 | License and setup | MIT; README and FirstStep guide |
-| Judge hosting | Existing authenticated Render Free service; working practice release verified; live-coaching deployment verification follows the release |
-| Demonstration | [FirstStep script](demo-script.md); local recording does not constitute submission |
-| NVIDIA/Nebius runtime | Real authorized FirstStep request verified; see runtime evidence |
+| Judge hosting | Authenticated Render Free service deployed at commit `e194aa8`; real hosted coaching verified |
+| Demonstration | Final 2:17, 1080p MP4 verified with narration, captions and one real hosted model request; [release record](evidence/firststep-release-verification.json) |
+| NVIDIA/Nebius runtime | Two real authorized FirstStep requests verified, including the hosted demo; see runtime evidence |
 | Public video | Final video with runtime evidence and public YouTube link required |
 | Devpost entry | Description prepared here; final submission not performed |
 
