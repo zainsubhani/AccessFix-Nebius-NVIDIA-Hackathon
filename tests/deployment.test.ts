@@ -46,7 +46,7 @@ test('persistent model reservations survive restarts and hourly resets without e
 
 async function startServer(directory: string): Promise<{ child: ChildProcess; url: string }> {
   const child = spawn(process.execPath, ['--import', 'tsx', 'server/index.ts'], {
-    env: { ...process.env, ...env, ACCESSFIX_DATA_DIR: directory, PORT: '0', NEBIUS_API_KEY: 'placeholder-never-used', ACCESSFIX_MODEL_REQUEST_LIMIT: '0', ACCESSFIX_RUNS_PER_HOUR: '1' },
+    env: { ...process.env, ...env, ACCESSFIX_DATA_DIR: directory, PORT: '0', NEBIUS_API_KEY: 'placeholder-never-used', ACCESSFIX_MODEL_REQUEST_LIMIT: '0', ACCESSFIX_RUNS_PER_HOUR: '1', FIRSTSTEP_LIVE_COACHING: 'true', FIRSTSTEP_COACH_REQUEST_LIMIT: '2' },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   return await new Promise((resolve, reject) => {
@@ -75,7 +75,7 @@ test('hosted HTTP protects evidence, enforces exact origins, runs a real audit a
   try {
     server = await startServer(directory);
     assert.equal((await fetch(server.url + '/api/health')).status, 200);
-    for (const route of ['/', '/api/config', '/api/runs', '/api/runs/20059716-75ab-457d-a685-28d0d9671158/report', '/api/runs/20059716-75ab-457d-a685-28d0d9671158/artifacts/before.png']) {
+    for (const route of ['/', '/firststep', '/api/firststep/config', '/api/config', '/api/runs', '/api/runs/20059716-75ab-457d-a685-28d0d9671158/report', '/api/runs/20059716-75ab-457d-a685-28d0d9671158/artifacts/before.png']) {
       assert.equal((await fetch(server.url + route)).status, 401, route);
     }
     assert.equal((await fetch(server.url + '/api/config', { headers: { Authorization: 'Basic invalid' } })).status, 401);
@@ -85,6 +85,8 @@ test('hosted HTTP protects evidence, enforces exact origins, runs a real audit a
     assert.equal(config.maxAttempts, 1);
     assert.equal(config.modelRequestsRemaining, 0);
     assert.ok(!JSON.stringify(config).includes('placeholder-never-used'));
+    assert.deepEqual(await (await request('/api/firststep/config')).json(), { enabled: false, remaining: 0 });
+    assert.equal((await request('/api/firststep/coach', 'POST', { mission: 'checkout', question: 'Help with this scenario' })).status, 403, 'Hosted coaching stays disabled even when local opt-in settings are inherited.');
     const history = await (await request('/api/runs')).json();
     assert.equal(history.length, 1);
     assert.equal(history[0].recordedDemo, true);

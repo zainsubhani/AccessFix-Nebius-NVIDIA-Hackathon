@@ -10,6 +10,8 @@ Built for the [Nebius × NVIDIA Global AI Hackathon](https://nebiusglobalaihacka
 
 ## Project status
 
+A separate **FirstStep practice prototype** is available locally at `/firststep`: investigate a checkout incident, edit a decision function, run regression checks, and attempt a transfer task. It uses authored guidance by default; optional Nebius/NVIDIA coaching is disabled and has not been live-validated. See the [FirstStep scope, setup and limitations](docs/firststep.md).
+
 This release is an experimental MVP with a local developer workflow and a restricted hosted judge demo. Auditing, candidate verification, regression rejection, history and report export are implemented. The latest live NVIDIA/Nebius repair improved the included signup from **6/10 to 10/10 browser checks and passed strict TypeScript checking**, with one model request. Earlier trials exposed focus, validation and typing defects; one successful fixture run does not establish general repair reliability. Prepared verification exercises are labeled separately and do not call a model. See the full [verification results](docs/verification.md).
 
 The current scope is four documented component contracts, not arbitrary repositories or full-application accessibility certification.
