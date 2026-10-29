@@ -6,7 +6,7 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { ROOT } from '../../server/config.js';
 
-const URL = process.env.ACCESSFIX_TEST_URL || 'http://127.0.0.1:5173';
+const URL = `${process.env.ACCESSFIX_TEST_URL || 'http://127.0.0.1:5173'}/accessfix`;
 async function noOverflow(page: Page) {
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'Page must not overflow horizontally.');
 }
@@ -25,14 +25,14 @@ test('desktop workflow: audit, accepted exercise, source diff, export, history a
   const context = await browser.newContext({ viewport: { width: 1536, height: 1024 }, reducedMotion: 'reduce', acceptDownloads: true });
   const page = await context.newPage();
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
-  await mkdir(path.join(ROOT, 'docs/design'), { recursive: true });
+  await mkdir(path.join(ROOT, '.accessfix/qa'), { recursive: true });
   try {
     await page.goto(URL);
     await page.getByRole('button', { name: 'Run audit', exact: true }).waitFor();
     await page.waitForFunction(() => !(document.querySelector('.setup-actions button') as HTMLButtonElement)?.disabled);
     await page.evaluate(() => document.fonts.ready);
     await page.frameLocator('iframe').getByTestId('email').waitFor();
-    await page.screenshot({ path: path.join(ROOT, 'docs/design/workbench-desktop.png'), fullPage: false });
+    await page.screenshot({ path: path.join(ROOT, '.accessfix/qa/workbench-desktop.png'), fullPage: false });
     await noOverflow(page); await a11y(page);
     await page.getByRole('button', { name: 'View source', exact: true }).click();
     await page.getByRole('heading', { name: 'examples/signup/Signup.tsx' }).waitFor();
@@ -58,7 +58,7 @@ test('desktop workflow: audit, accepted exercise, source diff, export, history a
     await page.getByRole('button', { name: 'Check results', exact: true }).click();
     await page.getByRole('button', { name: 'Candidate 1', exact: true }).click();
     await page.waitForFunction(() => { const image = document.querySelector('.browser-capture') as HTMLImageElement; return image?.complete && image.naturalWidth > 0; });
-    await page.screenshot({ path: path.join(ROOT, 'docs/design/workbench-accepted.png'), fullPage: true });
+    await page.screenshot({ path: path.join(ROOT, '.accessfix/qa/workbench-accepted.png'), fullPage: true });
     await a11y(page);
     await page.getByRole('button', { name: 'Run history', exact: true }).click();
     await page.getByRole('heading', { name: 'A record you can replay.' }).waitFor();
@@ -70,7 +70,7 @@ test('desktop workflow: audit, accepted exercise, source diff, export, history a
     await page.waitForFunction(() => { const image = document.querySelector('.browser-capture') as HTMLImageElement; return image?.complete && image.naturalWidth > 0; });
     await page.setViewportSize({ width: 390, height: 844 });
     await noOverflow(page); await a11y(page);
-    await page.screenshot({ path: path.join(ROOT, 'docs/design/workbench-mobile.png'), fullPage: true });
+    await page.screenshot({ path: path.join(ROOT, '.accessfix/qa/workbench-mobile.png'), fullPage: true });
     await page.getByRole('button', { name: 'Setup guide', exact: true }).click();
     await page.getByRole('heading', { name: 'Your local repair workspace.' }).waitFor();
     await noOverflow(page); await a11y(page);

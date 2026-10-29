@@ -9,5 +9,6 @@ import App from './App';
 import FirstStep from './firststep/FirstStep';
 import './styles.css';
 
-const Page = location.pathname === '/firststep' || location.pathname.startsWith('/firststep/') ? FirstStep : App;
+const isAccessFix = location.pathname === '/accessfix' || location.pathname.startsWith('/accessfix/');
+const Page = isAccessFix ? App : FirstStep;
 ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><Page /></React.StrictMode>);

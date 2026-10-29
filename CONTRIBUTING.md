@@ -1,6 +1,6 @@
 # Contributing
 
-AccessFix is an experimental local accessibility workflow for explicit React component contracts. Changes should preserve the separation between model-generated proposals and independently verified acceptance.
+FirstStep is a developer practice lab with authored incidents, executable checks and optional NVIDIA/Nebius coaching. The earlier AccessFix workbench is retained at `/accessfix`. Keep scenario facts, model guidance and executable evidence clearly distinguished.
 
 ## Development setup
 
@@ -25,7 +25,7 @@ To test against the built frontend, run `npm start` after building, and set `ACC
 
 ## Pull requests
 
-Explain the user-visible change, relevant limitations and checks performed. Update documentation when changing the component contract, provider behavior, acceptance rules or supported deployment model. Add regression coverage for meaningful behavior changes; avoid assertions that merely duplicate implementation.
+Explain the user-visible change, relevant limitations and checks performed. Update documentation when changing a mission, component contract, provider behavior, acceptance rules or supported deployment model. Add regression coverage for meaningful behavior changes; avoid assertions that merely duplicate implementation.
 
 Do not weaken acceptance checks to make a candidate pass. Changes to the protected contract must be explicit and reviewed independently from proposed component repairs. Distinguish live model output from prepared fixtures and manual corrections in test results and demonstrations.
 

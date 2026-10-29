@@ -1,6 +1,6 @@
 # FirstStep: a developer practice shift
 
-FirstStep is an experimental learning workflow at `/firststep`. A learner investigates an authored support incident, edits a JavaScript decision function, executes behavioural checks, explains the change, and applies the underlying concept to a different scenario. AccessFix remains available at `/`.
+FirstStep is an experimental learning workflow at `/` (with `/firststep` as an alias). A learner investigates an authored support incident, edits a JavaScript decision function, executes behavioural checks, explains the change, and applies the underlying concept to a different scenario. The companion AccessFix workbench remains available at `/accessfix`.
 
 ## Product hypothesis and challenge
 

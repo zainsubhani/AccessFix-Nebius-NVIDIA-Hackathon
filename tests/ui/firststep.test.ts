@@ -4,7 +4,7 @@ import { chromium, type Page } from 'playwright';
 import axe from 'axe-core';
 import { mkdir } from 'node:fs/promises';
 
-const URL = `${process.env.ACCESSFIX_TEST_URL || 'http://127.0.0.1:5173'}/firststep`;
+const URL = process.env.ACCESSFIX_TEST_URL || 'http://127.0.0.1:5173';
 const checkout = `function decide({ totalCents, email, paymentToken }) {
   if (typeof email !== 'string' || !email.trim()) return 'reject';
   if (!Number.isSafeInteger(totalCents) || totalCents < 0) return 'reject';
@@ -39,6 +39,8 @@ test('FirstStep: reproduce, reject a regression, accept a fix, transfer, export,
   try {
     await page.goto(URL);
     await page.getByRole('heading', { name: 'The order that never went through.' }).waitFor();
+    assert.match(await page.title(), /^FirstStep/);
+    assert.equal(await page.getByRole('link', { name: 'Companion workbench' }).getAttribute('href'), '/accessfix');
     await page.evaluate(() => document.fonts.ready);
     await page.screenshot({ path: '.accessfix/firststep/workspace-desktop.png', fullPage: true });
     await accessible(page);
@@ -94,7 +96,7 @@ test('FirstStep: timeout, syntax errors, cancellation, network isolation, and ke
   const browser = await chromium.launch();
   const page = await browser.newPage();
   try {
-    await page.goto(URL);
+    await page.goto(`${URL}/firststep`);
     await page.keyboard.press('Tab');
     assert.equal(await page.evaluate(() => document.activeElement?.textContent), 'Skip to practice');
     await page.keyboard.press('Enter');

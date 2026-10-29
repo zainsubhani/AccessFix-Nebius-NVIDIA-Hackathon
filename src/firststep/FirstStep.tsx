@@ -112,14 +112,14 @@ export default function FirstStep() {
   return <div className="fs-app">
     <a className="skip-link" href="#practice-main">Skip to practice</a>
     <aside className="fs-rail">
-      <a className="fs-brand" href="/firststep" aria-label="FirstStep practice home"><span className="fs-mark"><ArrowUpRight size={23} strokeWidth={2.5} /></span>firststep<span className="fs-brand-dot">.</span></a>
+      <a className="fs-brand" href="/" aria-label="FirstStep practice home"><span className="fs-mark"><ArrowUpRight size={23} strokeWidth={2.5} /></span>firststep<span className="fs-brand-dot">.</span></a>
       <div className="fs-rail-caption">YOUR PRACTICE SHIFT</div>
       <nav aria-label="Practice missions">
         <button className="fs-mission-nav" aria-current={current === 'checkout' ? 'page' : undefined} onClick={() => navigate('checkout')} disabled={Boolean(busy || coachBusy)}><Code2 size={19}/><span>Checkout incident<small>Guided investigation</small></span>{unlocked && <Check size={16}/>}</button>
         <button className="fs-mission-nav" aria-current={current === 'reservation' ? 'page' : undefined} onClick={() => navigate('reservation')} disabled={!unlocked || Boolean(busy || coachBusy)} aria-describedby={!unlocked ? 'transfer-lock' : undefined}><FlaskConical size={19}/><span>Transfer task<small>New context · fewer hints</small></span></button>
       </nav>
       {!unlocked && <p id="transfer-lock" className="fs-rail-note">Pass the checkout checks and explain your fix to unlock the next task.</p>}
-      <div className="fs-rail-bottom"><div className="fs-practice-label"><span/>Practice prototype</div><p>Real code execution.<br/>Authored scenario evidence.</p><a href="/">AccessFix workbench <ArrowUpRight size={14}/></a></div>
+      <div className="fs-rail-bottom"><div className="fs-practice-label"><span/>Practice prototype</div><p>Real code execution.<br/>Authored scenario evidence.</p><p><a href="https://nebiusglobalaihackathon.devpost.com/" target="_blank" rel="noreferrer">Nebius × NVIDIA<br/>Global AI Hackathon <ArrowUpRight size={14}/></a></p><a href="/accessfix">Companion workbench <ArrowUpRight size={14}/></a></div>
     </aside>
     <main id="practice-main" className="fs-main" tabIndex={-1}>
       <header className="fs-topbar"><span>Engineering lab <ChevronRight size={13}/> First shift</span><span className="fs-save-state">{saveWarning ? 'Draft in this page' : 'Draft saved in this tab'}</span></header>
